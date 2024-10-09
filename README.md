@@ -1,3 +1,3 @@
 # turbhermes
 
-testing how to use the github. Going to try a commit, and then a push.
+The github for my python methods to analyse Hermes-3 turbulence simulations. Built on the xhermes and boutdata/boututils frameworks, which in turn are build on xarray.
