@@ -18,6 +18,146 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
     # This is where module-specific methods would go
     # For example maybe elm-pb would have a .elm_growth_rate() method?
+
+    @property
+    def normalise_metric(self):
+
+        for varname in list(self.data):
+            da = self.data[varname]
+            #elif varname == "g11":
+            #    # Metric tensor term
+            #    da.attrs.update(
+            #        {
+            #            "units_type": "hermes",
+            #            "units": "T2 m2",
+            #            "conversion": (Bnorm * rho_s0)**2,
+            #            "standard_name": "g11",
+            #            "long_name": "g11 term in the metric tensor",
+            #        }
+            #    )
+            if varname == "g22":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "m-2",
+                        "conversion": 1/(rho_s0)**2,
+                        "standard_name": "g22",
+                        "long_name": "g22 term in the metric tensor",
+                    }
+                )
+            elif varname == "g33":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "m-2",
+                        "conversion": 1/(rho_s0)**2,
+                        "standard_name": "g33",
+                        "long_name": "g33 term in the metric tensor",
+                    }
+                )
+            elif varname == "g12":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "T",
+                        "conversion": Bnorm,
+                        "standard_name": "g12",
+                        "long_name": "g12 term in the metric tensor",
+                    }
+                )
+            elif varname == "g13":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "T",
+                        "conversion": Bnorm,
+                        "standard_name": "g13",
+                        "long_name": "g13 term in the metric tensor",
+                    }
+                )
+            elif varname == "g23":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "m-2",
+                        "conversion": 1/(rho_s0)**2,
+                        "standard_name": "g23",
+                        "long_name": "g23 term in the metric tensor",
+                    }
+                )
+            elif varname == "g_11":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "T-2m-2",
+                        "conversion": 1/(Bnorm * rho_s0)**2,
+                        "standard_name": "g_11",
+                        "long_name": "g_11 term in the metric tensor",
+                    }
+                )
+            #elif varname == "g_22":
+            #    # Metric tensor term
+            #    da.attrs.update(
+            #        {
+            #            "units_type": "hermes",
+            #            "units": "m2",
+            #            "conversion": (rho_s0)**2,
+            #            "standard_name": "g_22",
+            #            "long_name": "g_22 term in the metric tensor",
+            #        }
+            #    )
+            elif varname == "g_33":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "m2",
+                        "conversion": (rho_s0)**2,
+                        "standard_name": "g_33",
+                        "long_name": "g_33 term in the metric tensor",
+                    }
+                )
+            elif varname == "g_12":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "T-1",
+                        "conversion": 1/Bnorm,
+                        "standard_name": "g_12",
+                        "long_name": "g_12 term in the metric tensor",
+                    }
+                )
+            elif varname == "g_13":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "T-1",
+                        "conversion": 1/Bnorm,
+                        "standard_name": "g_13",
+                        "long_name": "g_13 term in the metric tensor",
+                    }
+                )
+            elif varname == "g_23":
+                # Metric tensor term
+                da.attrs.update(
+                    {
+                        "units_type": "hermes",
+                        "units": "m2",
+                        "conversion": (rho_s0)**2,
+                        "standard_name": "g_23",
+                        "long_name": "g_23 term in the metric tensor",
+                    }
+                )
+
+
     @property
     def radial_E_field(self):
         """Calculates local radial electric field"""
@@ -114,7 +254,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         species_variable = variable[1:]
                         species_list.append(species_variable)
         
-        species_list = self.data.metadata['species_list']
+        species_list = self.data.metadata['species']
         new_species = species_list[0] 
 
         # Add something to check that the metric tensors have been normalised? Or assume that the normalisation has already happened?
