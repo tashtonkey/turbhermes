@@ -1,3 +1,3 @@
 import matplotlib.pyplot as plt
-from .plotting import something_different
+from .plotting import 
 from .accessors import TurbulenceDataArrayAccessor, UtilityDatasetAccessor, TurbulenceDatasetAccessor
