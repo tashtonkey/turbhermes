@@ -18,29 +18,6 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
     # This is where module-specific methods would go
     # For example maybe elm-pb would have a .elm_growth_rate() method?
-
-    @property
-    def v_radial(self):
-        """Calculates local radial ExB velocity"""
-        """ DON'T USE, INAPPROPRIATE FOR TOROIDAL GEOMETRY """
-        if "v_radial" not in self.data:
-            E_z = self.data["phi"].bout.ddz()
-            v_radial = E_z / self.data["Bxy"]
-            v_radial.attrs["standard_name"] = "radial velocity"
-            self.data["v_radial"] = v_radial
-        return self.data["v_radial"]
-
-    @property
-    def v_binormal(self):
-        """Calculates local binormal ExB velocity"""
-        """ DON'T USE, INAPPROPRIATE FOR TOROIDAL GEOMETRY """
-        if "v_binormal" not in self.data:
-            E_x = self.data["phi"].bout.ddx()
-            v_binormal = -E_x / self.data["Bxy"]
-            v_binormal.attrs["standard_name"] = "binormal velocity"
-            self.data["v_binormal"] = v_binormal
-        return self.data["v_binormal"]
-
     @property
     def radial_E_field(self):
         """Calculates local radial electric field"""
@@ -75,7 +52,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                 temperature.attrs["standard_name"] = "temperature"
                 temperature.attrs["long_name"] = species + " temperature"
                 temperature.attrs["units"] = "eV"
-                temperature.attrs["conversion"] = 50
+                temperature.attrs["conversion"] = self.data.metadata['Tnorm']
                 self.data["T" + species] = temperature
                 new_species = species
         return self.data["T" + new_species]
@@ -111,7 +88,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                 
                 new_conversion = NVe_conv/(mass_in_kg*Ne_conv)
 
-                parallel_velocity = self.data['NV' + species]/self.data['N' + species]
+                parallel_velocity = self.data['NV' + species]/self.data['N' + species] # If this used by xhermes, these will be normalised already
                 parallel_velocity.attrs["standard_name"] = "parallel velocity"
                 parallel_velocity.attrs["long_name"] = species + " parallel velocity"
                 parallel_velocity.attrs["units"] = "m / s"
@@ -136,8 +113,11 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                     if index == -1:
                         species_variable = variable[1:]
                         species_list.append(species_variable)
-        new_species = species_list[0] 
         
+        species_list = self.data.metadata['species_list']
+        new_species = species_list[0] 
+
+        # Add something to check that the metric tensors have been normalised? Or assume that the normalisation has already happened?
         
         jacobian = self.data['J']
         g_12 = self.data['g_12']
@@ -172,13 +152,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                     p_ddy = pressure.bout.ddy()
                     p_ddz = pressure.bout.ddz()
 
-                    pressure_conversion = pressure.attrs['conversion']
-                    density_conversion = density.attrs['conversion']
-
                     # this is -ve because ExB and diamagnetic need to oppose, and one document says this way, another says the other way, idk what's correct
-                    V_dia_x = -(charge_sign * pressure_conversion * (p_ddy * g_23 - p_ddz * g_22) / (rho_s0 * density_conversion * density *  1.602e-19 * g_22 )) * np.sqrt(g_11)
-                    V_dia_y = -(charge_sign * pressure_conversion * (p_ddz * g_12 - p_ddx * g_23) / (rho_s0 * density_conversion * density *  1.602e-19 * g_22 )) * np.sqrt(g_22)
-                    V_dia_z = -(charge_sign * pressure_conversion * (p_ddx * g_22 - p_ddy * g_12) / (rho_s0 * density_conversion * density *  1.602e-19 * g_22 )) * np.sqrt(g_33)
+                    V_dia_x = -(charge_sign * (p_ddy * g_23 - p_ddz * g_22) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_11)
+                    V_dia_y = -(charge_sign * (p_ddz * g_12 - p_ddx * g_23) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_22)
+                    V_dia_z = -(charge_sign * (p_ddx * g_22 - p_ddy * g_12) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_33)
 
                     V_dia_x.attrs['long_name'] = 'radial diamagnetic velocity'
                     V_dia_y.attrs['long_name'] = 'poloidal diamagnetic velocity'
@@ -236,6 +213,34 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             self.data['V_ExB_x'] = V_ExB_x
             self.data['V_ExB_y'] = V_ExB_y
             self.data['V_ExB_z'] = V_ExB_z
+
+            #### New Version Below
+
+            rho_s0 = ds.metadata['rho_s0']
+            Bnorm = ds.metadata['Bnorm']
+
+            metric_component_list = ['g11', 'g12', 'g13', 'g22', 'g23', 'g33', 'g_11', 'g_12', 'g_13', 'g_22', 'g_23', 'g_33']
+
+            metric_unnormalise_dict = {'g11': 1, 'g22':1/(rho_s0)**2, 'g33':1/(rho_s0)**2, 'g12':Bnorm, 'g13':Bnorm, 'g23': 1/(rho_s0)**2,
+                                        'g_11': 1/(Bnorm*rho_s0)**2, 'g_22': 1, 'g_33':(rho_s0)**2, 'g_12':1/Bnorm, 'g_13':1/Bnorm, 'g_23': (rho_s0)**2}
+
+            for metric in metric_component_list:
+                ds[metric] = ds[metric] * metric_unnormalise_dict[metric]
+                
+            potential = ds['phi']
+
+            phi_ddx = -potential.bout.ddx() # this is Ex. No need for any conversion
+            phi_ddy = -potential.bout.ddy() # this is Ey
+            phi_ddz = -potential.bout.ddz() # this is Ez
+
+            # Don't need to convert units because xHermes does it for me
+            # -ve in front to be consistent with documentation from the BOUT++ manual : v_ExB = ExB/B**2
+            V_ExB_x = ((phi_ddy * ds['g_23'] - phi_ddz * ds['g_22']) / (ds['g_22'])) * np.sqrt(ds['g_11'])
+            V_ExB_y = ((phi_ddz * ds['g_12'] - phi_ddx * ds['g_23']) / (ds['g_22'])) * np.sqrt(ds['g_22'])
+            V_ExB_z = ((phi_ddx * ds['g_22'] - phi_ddy * ds['g_12']) / (ds['g_22'])) * np.sqrt(ds['g_33'])
+
+
+
         return "Calculated"
 
 """
@@ -326,7 +331,7 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
     
     
     @property
-    def get_fluctuations(self):
+    def fluctuations(self):
         """
         This gets delta-n compared to the mean profiles of the given variable. You cannot log10 this, because it goes +ve and -ve.
         This will return a data array that can be put straight back into a bd dataset.
@@ -376,141 +381,5 @@ class TurbulenceDatasetAccessor(BoutDatasetAccessor):
         self.metadata = ds.attrs.get("metadata")  
         self.coords = ds.coords
         self.attrs = ds.attrs
-        
-    @property   
-    def magnetic_vector(self):
-        import cmath
-        """
-        This method gets the radial vectors between cells, and the adjacent poloidal vectors for the magnetic field
-        in the R, Z coords. 
-        
-        NOTE this will not be perfect, because the cell centres are approximations for where the magnetic fields will flow
-        
-        """
-        if "Bpxy_R" not in self.data:
-            vector_R_array = []
-            vector_Z_array = []
-
-            vector_A_array = []
-            vector_B_array = []
-
-            for theta_index in range(len(self.coords['theta'])):
-                poloidal_slice = self.data.isel(theta = theta_index)
-                #subset = subset.dropna(dim='x')
-                #subset = subset.dropna(dim='theta')
-                R_values = np.array(poloidal_slice['R'])
-                Z_values = np.array(poloidal_slice['Z'])
-                #print(R_values) # these go from the innermost radial coordinate to the outermost. Iterate through the radial cells to calculate the vector
-                vector_R_list = []
-                vector_Z_list = []
-
-                vector_A_list = []
-                vector_B_list = []
-                for x_index in self.coords['x'][:-1]:
-                    particular_R_val = R_values[x_index]
-                    particular_Z_val = Z_values[x_index]
-                    particular_R_plus = R_values[x_index + 1]
-                    particular_Z_plus = Z_values[x_index + 1]
-
-                    delta_R = particular_R_plus - particular_R_val
-                    delta_Z = particular_Z_plus - particular_Z_val
-
-                    norm = np.sqrt(delta_R**2 + delta_Z**2)
-                    vector_R = delta_R/norm
-                    vector_Z = delta_Z/norm
-
-                    complex_vect = complex(vector_R, vector_Z)
-                    adj_vect = complex_vect * 1j
-                    #print(complex_vect)
-                    #print(adj_vect)
-                    vector_pol_A = adj_vect.real
-                    vector_pol_B = adj_vect.imag
-
-                    vector_A_list.append(vector_pol_A)
-                    vector_B_list.append(vector_pol_B)
-
-                    #poloidal_vector_A = 1
-                    #poloidal_vector_B = -vector_R/vector_Z
-                    #poloidal_norm = np.sqrt(poloidal_vector_A**2 + poloidal_vector_B**2)
-                    #vector_pol_A = poloidal_vector_A/poloidal_norm
-                    #vector_pol_B = poloidal_vector_B/poloidal_norm
-
-                    vector_R_list.append(vector_R)
-                    vector_Z_list.append(vector_Z)
-
-                # adding the final term again to try and match dimensions
-                vector_R_list.append(vector_R_list[-1])
-                vector_Z_list.append(vector_Z_list[-1])
-
-                vector_A_list.append(vector_A_list[-1])
-                vector_B_list.append(vector_B_list[-1])
-
-                """print("Vector at x_ind = " + str(np.float64(x_index)) + ", theta = " + str(np.float64(bd.theta[theta_index])) + " is:")
-                print(vector_RZ)"""
-                """print(np.float64(subset['Bpxy']))
-                print(np.float64(subset['poloidal_distance']))
-                print(np.float64(subset['poloidal_distance_ylow']))
-                print(np.float64(subset['R']))
-                print(np.float64(subset['Z']))"""
-                vector_R_array.append(vector_R_list)
-                vector_Z_array.append(vector_Z_list)
-
-                vector_A_array.append(vector_A_list)
-                vector_B_array.append(vector_B_list)
-
-
-
-            array_for_R_vector = np.transpose(np.array(vector_R_array))
-            array_for_Z_vector = np.transpose(np.array(vector_Z_array))
-
-            poloidal_array_for_A_vector = np.transpose(np.array(vector_A_array))
-            poloidal_array_for_B_vector = np.transpose(np.array(vector_B_array))
-
-
-            coordinates = self.data['Bpxy'].coords
-            attributes = self.data['Bpxy'].attrs
-            
-            vector_R_DataArray = xarray.DataArray(array_for_R_vector, dims = ['x','theta'], coords = coordinates, attrs = attributes)
-            vector_Z_DataArray = xarray.DataArray(array_for_Z_vector, dims = ['x','theta'], coords = coordinates, attrs = attributes)
-
-                # need to get the radial vectors, then get the binormal for the poloidal direction vector
-
-            poloidal_vector_A_DataArray = xarray.DataArray(poloidal_array_for_A_vector, dims = ['x','theta'], coords = coordinates, attrs = attributes)
-            poloidal_vector_B_DataArray = xarray.DataArray(poloidal_array_for_B_vector, dims = ['x','theta'], coords = coordinates, attrs = attributes)
-
-
-            vector_R_DataArray.attrs['standard_name'] = "R component radial vector"
-            vector_Z_DataArray.attrs['standard_name'] = "Z component radial vector"
-            vector_R_DataArray.attrs['long_name'] = "R component radial vector"
-            vector_Z_DataArray.attrs['long_name'] = "Z component radial vector"
-            
-            self.data["vR_rad"] = vector_R_DataArray
-            self.data["vZ_rad"] = vector_Z_DataArray
-
-            poloidal_vector_A_DataArray.attrs['standard_name'] = "R component poloidal vector"
-            poloidal_vector_B_DataArray.attrs['standard_name'] = "Z component poloidal vector"
-            poloidal_vector_A_DataArray.attrs['long_name'] = "R component poloidal vector"
-            poloidal_vector_B_DataArray.attrs['long_name'] = "Z component poloidal vector"
-
-            self.data["vR_pol"] = poloidal_vector_A_DataArray
-            self.data["vZ_pol"] = poloidal_vector_B_DataArray
-
-            
-            Bpxy_R_array = self.data["vR_pol"] * self.data['Bpxy']
-            Bpxy_Z_array = self.data["vZ_pol"] * self.data['Bpxy']
-            
-            Bpxy_R_array.attrs['standard_name'] = "R component poloidal magnetic field"
-            Bpxy_Z_array.attrs['standard_name'] = "Z component poloidal magnetic field"
-            Bpxy_R_array.attrs['long_name'] = "R component poloidal magnetic field"
-            Bpxy_Z_array.attrs['long_name'] = "Z component poloidal magnetic field"
-        
-            self.data['Bpxy_R'] = Bpxy_R_array
-            self.data['Bpxy_Z'] = Bpxy_Z_array
-            
-            resulting_dictionary = {'vR_rad':self.data["vR_rad"], 'vZ_rad':self.data["vZ_rad"], 'vR_pol':self.data["vR_pol"], 'vZ_pol':self.data["vZ_pol"], 'Bpxy_R':self.data['Bpxy_R'], 'Bpxy_Z':self.data['Bpxy_Z']}
-            return resulting_dictionary
-        else:
-            print('Already calculated')
-            return None
         
     
