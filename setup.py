@@ -9,7 +9,7 @@ setup(
 	version="0.1",
 	description="Analyse Hermes-3 simulations, extending from xhermes",
 	license="Apache",
-	long_description = read("README.md")
+	long_description = read("README.md"),
 	classifiers=[
 		"Development Status :: 2 - Pre-Alpha",
 		"Intended Audience :: Science/Research",
