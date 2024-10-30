@@ -49,6 +49,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g22 term in the metric tensor",
                     }
                 )
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g33":
                 # Metric tensor term
                 da.attrs.update(
@@ -60,6 +63,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g33 term in the metric tensor",
                     }
                 )
+                
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
             elif varname == "g12":
                 # Metric tensor term
                 da.attrs.update(
@@ -71,6 +77,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g12 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
             elif varname == "g13":
                 # Metric tensor term
                 da.attrs.update(
@@ -82,6 +91,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g13 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g23":
                 # Metric tensor term
                 da.attrs.update(
@@ -93,6 +106,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g23 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g_11":
                 # Metric tensor term
                 da.attrs.update(
@@ -104,6 +121,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g_11 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             #elif varname == "g_22":
             #    # Metric tensor term
             #    da.attrs.update(
@@ -126,6 +147,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g_33 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g_12":
                 # Metric tensor term
                 da.attrs.update(
@@ -137,6 +162,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g_12 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g_13":
                 # Metric tensor term
                 da.attrs.update(
@@ -148,6 +177,10 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g_13 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
+
             elif varname == "g_23":
                 # Metric tensor term
                 da.attrs.update(
@@ -159,6 +192,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                         "long_name": "g_23 term in the metric tensor",
                     }
                 )
+
+                da *= da.attrs["conversion"]
+                da.attrs["units_type"] = "SI"
 
 
     @property
