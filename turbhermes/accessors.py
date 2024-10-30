@@ -21,6 +21,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
     @property
     def normalise_metric(self):
+    
+        rho_s0 = self.data.metadata['rho_s0']
+        Bnorm = self.data.metadata['Bnorm']
 
         for varname in list(self.data):
             da = self.data[varname]
@@ -161,7 +164,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
     @property
     def radial_E_field(self):
         """Calculates local radial electric field"""
-        #THIS NEEDS NORMALISING BECAUSE OF THE GRADIENT WITH rho_s0, maybe?
+        
         if "radial_E" not in self.data:
             E_x = self.data["phi"].bout.ddx()
             E_x.attrs["standard_name"] = "radial E field"
@@ -172,7 +175,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
     
     @property
     def calculate_temp(self):
-        """Calculates local radial electric field
+        """Calculates local temperature
         species = string of the species type, ie 'd', 'e', to match formatting
         """
         species_list = []
@@ -245,15 +248,6 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
         """
         import math
         
-        species_list = []
-        for variable in list(self.data):
-            if variable[0] == 'N':
-                if variable[1].isupper() == False:
-                    index = variable.find('_')
-                    if index == -1:
-                        species_variable = variable[1:]
-                        species_list.append(species_variable)
-        
         species_list = self.data.metadata['species']
         new_species = species_list[0] 
 
@@ -320,22 +314,16 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
         if "V_ExB_x" not in self.data:
             potential = self.data['phi']
-            potential_conversion = potential.attrs['conversion'] # converting the psi computational units into real units
 
-            phi_ddx = -potential.bout.ddx() # this is Ex
+            phi_ddx = -potential.bout.ddx() # this is Ex. No need for any conversion
             phi_ddy = -potential.bout.ddy() # this is Ey
             phi_ddz = -potential.bout.ddz() # this is Ez
 
-            # g_12 = 0
-
-            V_ExB_x = potential_conversion * (phi_ddy * g_23 - phi_ddz * g_22) / (rho_s0 * g_22) * np.sqrt(g11)
-            
-            if poloidal_flow_bool == True:
-                V_ExB_y = potential_conversion * (phi_ddz * g_12 - phi_ddx * g_23) / (rho_s0 * g_22) * np.sqrt(g22)
-            elif poloidal_flow_bool == False:
-                V_ExB_y = 0 * (phi_ddz * g_12 - phi_ddx * g_23) / (rho_s0 * g_22) * np.sqrt(g_22)
-            
-            V_ExB_z = potential_conversion * (phi_ddx * g_22 - phi_ddy * g_12) / (rho_s0 * g_22) * np.sqrt(g33)
+            # Don't need to convert units because xHermes does it for me
+            # -ve in front to be consistent with documentation from the BOUT++ manual : v_ExB = ExB/B**2
+            V_ExB_x = ((phi_ddy * g_23 - phi_ddz * g_22) / (g_22)) * np.sqrt(g_11)
+            V_ExB_y = ((phi_ddz * g_12 - phi_ddx * g_23) / (g_22)) * np.sqrt(g_22)
+            V_ExB_z = ((phi_ddx * g_22 - phi_ddy * g_12) / (g_22)) * np.sqrt(g_33)
 
             V_ExB_x.attrs['long_name'] = 'radial ExB velocity'
             V_ExB_y.attrs['long_name'] = 'poloidal ExB velocity'
@@ -353,33 +341,6 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             self.data['V_ExB_x'] = V_ExB_x
             self.data['V_ExB_y'] = V_ExB_y
             self.data['V_ExB_z'] = V_ExB_z
-
-            #### New Version Below
-
-            rho_s0 = ds.metadata['rho_s0']
-            Bnorm = ds.metadata['Bnorm']
-
-            metric_component_list = ['g11', 'g12', 'g13', 'g22', 'g23', 'g33', 'g_11', 'g_12', 'g_13', 'g_22', 'g_23', 'g_33']
-
-            metric_unnormalise_dict = {'g11': 1, 'g22':1/(rho_s0)**2, 'g33':1/(rho_s0)**2, 'g12':Bnorm, 'g13':Bnorm, 'g23': 1/(rho_s0)**2,
-                                        'g_11': 1/(Bnorm*rho_s0)**2, 'g_22': 1, 'g_33':(rho_s0)**2, 'g_12':1/Bnorm, 'g_13':1/Bnorm, 'g_23': (rho_s0)**2}
-
-            for metric in metric_component_list:
-                ds[metric] = ds[metric] * metric_unnormalise_dict[metric]
-                
-            potential = ds['phi']
-
-            phi_ddx = -potential.bout.ddx() # this is Ex. No need for any conversion
-            phi_ddy = -potential.bout.ddy() # this is Ey
-            phi_ddz = -potential.bout.ddz() # this is Ez
-
-            # Don't need to convert units because xHermes does it for me
-            # -ve in front to be consistent with documentation from the BOUT++ manual : v_ExB = ExB/B**2
-            V_ExB_x = ((phi_ddy * ds['g_23'] - phi_ddz * ds['g_22']) / (ds['g_22'])) * np.sqrt(ds['g_11'])
-            V_ExB_y = ((phi_ddz * ds['g_12'] - phi_ddx * ds['g_23']) / (ds['g_22'])) * np.sqrt(ds['g_22'])
-            V_ExB_z = ((phi_ddx * ds['g_22'] - phi_ddy * ds['g_12']) / (ds['g_22'])) * np.sqrt(ds['g_33'])
-
-
 
         return "Calculated"
 
