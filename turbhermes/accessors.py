@@ -1,7 +1,7 @@
 from xarray import register_dataset_accessor, register_dataarray_accessor
 from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
-
+import xarray
 
 @register_dataset_accessor("utils")
 class UtilityDatasetAccessor(BoutDatasetAccessor):
