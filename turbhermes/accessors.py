@@ -1,6 +1,7 @@
 from xarray import register_dataset_accessor, register_dataarray_accessor
 from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
+import xarray
 import matplotlib.pyplot as plt
 
 @register_dataset_accessor("utils")
@@ -202,7 +203,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
         """Calculates local radial electric field"""
         
         if "radial_E" not in self.data:
-            E_x = self.data["phi"].bout.ddx()
+            E_x = -self.data["phi"].bout.ddx()
             E_x.attrs["standard_name"] = "radial E field"
             E_x.attrs["long_name"] = "radial electric field"
             E_x.attrs["units"] = "V m^-1"
