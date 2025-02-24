@@ -140,27 +140,28 @@ def _get_R_coord_option(coord, da):
     label = "R-R_sep (m)"
     
     separatrix_index = da.metadata['ixseps1']
+    print(separatrix_index)
     
     if separatrix_index < da.metadata['nx']:
         # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
         separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
-        sep_R = Rxy[separatrix_index_true]
-        sep_Z = Zxy[separatrix_index_true]
+        print(separatrix_index_true)
     else:
-        sep_R = Rxy[-1]
-        sep_Z = Zxy[-1]
+        separatrix_index_true = 0
 
+    sep_R = Rxy[separatrix_index_true]
+    sep_Z = Zxy[separatrix_index_true]
         # calculate the deviation of the coordinate from the separatrix location
     physical_grid = []
     for x_index in range(len(da.coords['x'])):
         particular_R = Rxy[x_index]
         particular_Z = Zxy[x_index]
-        if x_index < separatrix_index:
+        if x_index < separatrix_index_true:
             delta_R = particular_R - sep_R 
             delta_Z = particular_Z - sep_Z
             grid_distance = -np.sqrt(delta_R**2 + delta_Z**2)
             physical_grid.append(grid_distance)
-        elif x_index >= separatrix_index:
+        elif x_index >= separatrix_index_true:
             delta_R = particular_R - sep_R 
             delta_Z = particular_Z - sep_Z
             grid_distance = np.sqrt(delta_R**2 + delta_Z**2)
