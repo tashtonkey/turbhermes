@@ -1,4 +1,42 @@
+import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+import animatplot as amp
+from matplotlib.animation import PillowWriter
+
+def _normalise_time_coord(time_values):
+    """
+    amp.Timeline() does not do a good job of displaying time values that are very small
+    (they get rounded to zero). This function scales the time values by a power of 10 to
+    get nice values and modifies the units by the scale factor.
+    """
+    tmax = time_values.max()
+    if tmax < 1.0e-2 or tmax > 1.0e6:
+        scale_pow = int(np.floor(np.log10(tmax)))
+        scale_factor = 10**scale_pow
+        time_values = time_values / scale_factor
+        suffix = f"e{scale_pow}"
+    else:
+        suffix = ""
+
+    return time_values, suffix
+
+def _add_controls(anim, controls, t_label):
+    if controls == "both":
+        # Add both time slider and play/pause toggle
+        anim.controls(timeline_slider_args={"text": t_label})
+    elif controls == "timeline":
+        # Add time slider
+        anim.timeline_slider(text=t_label)
+    elif controls == "toggle":
+        # Add play/pause toggle
+        anim.toggle()
+    elif controls is None or controls == "":
+        # Add no controls
+        pass
+    else:
+        raise ValueError(f"Unrecognised value for controls={controls}")
+
 def multi_line_raw(bd_list, variable, coordinates, ax=None, **kwargs):
     """
     Plots a time trace of all the datasets in the bd_list, converted to correct units
@@ -64,3 +102,233 @@ def multi_line_zeta(bd_list, variable, coordinates, ax=None, **kwargs):
         ax.set_ylabel(variable_name + '  ' + units)
     
     return
+
+
+def _parse_coord_option(coord, axis_coords, da):
+    if isinstance(axis_coords, dict):
+        option_value = axis_coords.get(coord, None)
+    else:
+        option_value = axis_coords
+
+    if option_value is None:
+        c = da[coord]
+        if "long_name" in c.attrs:
+            label = c.long_name
+        else:
+            label = coord
+        if "units" in c.attrs:
+            label = label + f" [{c.units}]"
+        return c, label
+    elif option_value == "index":
+        return np.arange(da.sizes[coord]), f"{coord} index"
+    elif isinstance(option_value, str):
+        c = da[option_value]
+        if "long_name" in c.attrs:
+            label = c.long_name
+        else:
+            label = option_value
+        if "units" in c.attrs:
+            label = label + f" [{c.units}]"
+        return c, label
+    else:
+        return option_value, None
+    
+def _get_R_coord_option(coord, da):
+
+    Rxy = da['R']
+    Zxy = da['Z']
+    label = "R-R_sep (m)"
+    
+    separatrix_index = da.metadata['ixseps1']
+    
+    if separatrix_index < da.metadata['nx']:
+        # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
+        separatrix_index_true = np.where(np.array(da.coord['x']) == separatrix_index)[0][0]
+        sep_R = Rxy[separatrix_index_true]
+        sep_Z = Zxy[separatrix_index_true]
+    else:
+        sep_R = Rxy[-1]
+        sep_Z = Zxy[-1]
+
+        # calculate the deviation of the coordinate from the separatrix location
+    physical_grid = []
+    for x_index in range(len(da.coords['x'])):
+        particular_R = Rxy[x_index]
+        particular_Z = Zxy[x_index]
+        if x_index < separatrix_index:
+            delta_R = particular_R - sep_R 
+            delta_Z = particular_Z - sep_Z
+            grid_distance = -np.sqrt(delta_R**2 + delta_Z**2)
+            physical_grid.append(grid_distance)
+        elif x_index >= separatrix_index:
+            delta_R = particular_R - sep_R 
+            delta_Z = particular_Z - sep_Z
+            grid_distance = np.sqrt(delta_R**2 + delta_Z**2)
+            physical_grid.append(grid_distance)
+
+    physical_grid = np.array(physical_grid)
+    return physical_grid, label
+
+
+
+def diagonal_slice_plotting(
+    data,
+    animate_over=None,
+    animate=True,
+    axis_coords=None,
+    vmin=None,
+    vmax=None,
+    logscale=False,
+    fps=10,
+    save_as=None,
+    sep_pos=None,
+    ax=None,
+    aspect=None,
+    controls="both",
+    **kwargs,
+):
+    """
+    Plots a line plot which is animated with time.
+
+    Currently only supports 1D+1 data, which it plots with animatplot's Line animation.
+
+    Parameters
+    ----------
+    data : xarray.DataArray
+    animate_over : str, optional
+        Dimension over which to animate, defaults to the time dimension
+    animate : bool, optional
+        If set to false, do not create the animation, just return the block
+    axis_coords : None, str, dict
+        Coordinates to use for axis labelling.
+
+        - None: Use the dimension coordinate for each axis, if it exists.
+        - "index": Use the integer index values.
+        - dict: keys are dimension names, values set axis_coords for each axis
+          separately. Values can be: None, "index", the name of a 1d variable or
+          coordinate (which must have the dimension given by 'key'), or a 1d
+          numpy array, dask array or DataArray whose length matches the length of
+          the dimension given by 'key'.
+    vmin : float, optional
+        Minimum value to use for colorbar. Default is to use minimum value of
+        data across whole timeseries.
+    vmax : float, optional
+        Maximum value to use for colorbar. Default is to use maximum value of
+        data across whole timeseries.
+    logscale : bool or float, optional
+        If True, default to a logarithmic color scale instead of a linear one.
+        If a non-bool type is passed it is treated as a float used to set the linear
+        threshold of a symmetric logarithmic scale as
+        linthresh=min(abs(vmin),abs(vmax))*logscale, defaults to 1e-5 if True is
+        passed.
+    fps : int, optional
+        Frames per second of resulting gif
+    save_as : True or str, optional
+        If str is passed, save the animation as save_as+'.gif'.
+        If True is passed, save the animation with a default name,
+        '<variable name>_over_<animate_over>.gif'
+    sep_pos : int, optional
+        Radial position at which to plot the separatrix
+    ax : Axes, optional
+        A matplotlib axes instance to plot to. If None, create a new
+        figure and axes, and plot to that
+    aspect : str or None, optional
+        Argument to set_aspect(), defaults to "auto"
+    controls : string or None, default "both"
+        By default, add both the timeline and play/pause toggle to the animation. If
+        "timeline" is passed add only the timeline, if "toggle" is passed add only the
+        play/pause toggle. If None or an empty string is passed, add neither.
+    kwargs : dict, optional
+        Additional keyword arguments are passed on to the plotting function
+        animatplot.blocks.Line
+
+    Returns
+    -------
+    animation or block
+        If animate==True, returns an animatplot.Animation object, otherwise
+        returns an animatplot.blocks.Line instance.
+    """
+
+    if animate_over is None:
+        animate_over = data.metadata.get("bout_tdim", "t")
+
+    if aspect is None:
+        aspect = "auto"
+
+    variable = data.name
+
+    # Check plot is the right orientation
+    t_read, x_read = data.dims
+    if t_read == animate_over:
+        x = x_read
+    else:
+        data = data.transpose(animate_over, t_read, transpose_coords=True)
+        x = t_read
+
+    # Load values eagerly otherwise for some reason the plotting takes
+    # 100's of times longer - for some reason animatplot does not deal
+    # well with dask arrays!
+    image_data = data.values
+
+    # If not specified, determine max and min values across entire data series
+    if vmax is None:
+        vmax = np.max(image_data)
+    if vmin is None:
+        vmin = np.min(image_data)
+
+    x_values, x_label = _get_R_coord_option(x, data)
+
+    if not ax:
+        fig, ax = plt.subplots()
+
+    ax.set_aspect(aspect)
+
+    # set range of plot
+    ax.set_ylim([vmin, vmax])
+
+    line_block = amp.blocks.Line(x_values, image_data, ax=ax, **kwargs)
+
+    if animate:
+        t_values, t_label = _parse_coord_option(animate_over, axis_coords, data)
+        t_values, t_suffix = _normalise_time_coord(t_values)
+
+        timeline = amp.Timeline(t_values, fps=fps, units=t_suffix)
+        anim = amp.Animation([line_block], timeline)
+
+    # Add title and axis labels
+    ax.set_title(variable)
+    ax.set_xlabel(x_label)
+    if "long_name" in data.attrs:
+        y_label = data.long_name
+    else:
+        y_label = variable
+    if "units" in data.attrs:
+        y_label = y_label + f" [{data.units}]"
+    ax.set_ylabel(y_label)
+
+    if logscale:
+        if vmin * vmax > 0.0:
+            ax.set_yscale("log")
+        else:
+            if not isinstance(logscale, bool):
+                linear_scale = logscale
+            else:
+                linear_scale = 1.0e-5
+            linear_threshold = min(abs(vmin), abs(vmax)) * linear_scale
+            ax.set_yscale("symlog", linthresh=linear_threshold)
+
+    # Plot separatrix
+    if sep_pos:
+        ax.plot_vline(sep_pos, "--")
+
+    if animate:
+        _add_controls(anim, controls, t_label)
+
+        if save_as is not None:
+            if save_as is True:
+                save_as = "{}_over_{}".format(variable, animate_over)
+            anim.save(save_as + ".gif", writer=PillowWriter(fps=fps))
+
+        return anim
+
+    return line_block
