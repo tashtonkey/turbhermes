@@ -143,7 +143,7 @@ def _get_R_coord_option(coord, da):
     
     if separatrix_index < da.metadata['nx']:
         # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
-        separatrix_index_true = np.where(np.array(da.coord['x']) == separatrix_index)[0][0]
+        separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
         sep_R = Rxy[separatrix_index_true]
         sep_Z = Zxy[separatrix_index_true]
     else:
