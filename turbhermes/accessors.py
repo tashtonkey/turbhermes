@@ -3,6 +3,7 @@ from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
 import xarray
 import matplotlib.pyplot as plt
+from .plotting import diagonal_slice_plotting
 
 @register_dataset_accessor("utils")
 class UtilityDatasetAccessor(BoutDatasetAccessor):
@@ -436,7 +437,7 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
 
         # calculate the deviation of the coordinate from the separatrix location
         physical_grid = []
-        for x_index in self.coords['x']:
+        for x_index in range(len(self.coords['x'])):
             particular_R = R_values[x_index]
             particular_Z = Z_values[x_index]
             if x_index < separatrix_index:
@@ -453,10 +454,10 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         physical_grid = np.array(physical_grid)
         
         self_name = str(self.attrs['long_name'])
-        self_conversion = self.attrs['conversion']
+        
         self_units = str(self.attrs['units'])
 
-        slice_amplitudes = np.array(self.data)*self_conversion
+        slice_amplitudes = np.array(self.data)
         
         fig, ax = plt.subplots()
         ax.set_xlabel("R-R_sep (m)")
@@ -467,7 +468,85 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         
         return 'Plotting'
     
+    def animate_diagonal_profile(
+        self,
+        animate_over=None,
+        animate=True,
+        axis_coords=None,
+        fps=10,
+        save_as=None,
+        sep_pos=None,
+        ax=None,
+        **kwargs,
+    ):
+        """
+        Plots a line plot which is animated over time over the specified coordinate.
+
+        Currently only supports 1D+1 data, which it plots with animatplot's wrapping of
+        matplotlib's plot.
+
+        Parameters
+        ----------
+        animate_over : str, optional
+            Dimension over which to animate, defaults to the time dimension
+        axis_coords : None, str, dict
+            Coordinates to use for axis labelling.
+
+            - None: Use the dimension coordinate for each axis, if it exists.
+            - "index": Use the integer index values.
+            - dict: keys are dimension names, values set axis_coords for each axis
+              separately. Values can be: None, "index", the name of a 1d variable or
+              coordinate (which must have the dimension given by 'key'), or a 1d
+              numpy array, dask array or DataArray whose length matches the length of
+              the dimension given by 'key'.
+        fps : int, optional
+            Frames per second of resulting gif
+        save_as : True or str, optional
+            If str is passed, save the animation as save_as+'.gif'.
+            If True is passed, save the animation with a default name,
+            '<variable name>_over_<animate_over>.gif'
+        sep_pos : int, optional
+            Radial position at which to plot the separatrix
+        ax : Axes, optional
+            A matplotlib axes instance to plot to. If None, create a new
+            figure and axes, and plot to that
+        aspect : str or None, optional
+            Argument to ``ax.set_aspect()``, defaults to "auto"
+        kwargs : dict, optional
+            Additional keyword arguments are passed on to the plotting function
+            (animatplot.blocks.Line).
+
+        Returns
+        -------
+        animation or block
+            If ``animate==True``, returns an animatplot.Animation object, otherwise
+            returns an animatplot.blocks.Line instance.
+        """
+
+        data = self.data
+        variable = data.name
+        n_dims = len(data.dims)
+
+        if n_dims == 2:
+            print(
+                "{} data passed has {} dimensions - will use "
+                "animatplot.blocks.Line()".format(variable, str(n_dims))
+            )
+            line_block = diagonal_slice_plotting(
+                data=data,
+                animate_over=animate_over,
+                axis_coords=axis_coords,
+                sep_pos=sep_pos,
+                animate=animate,
+                fps=fps,
+                save_as=save_as,
+                ax=ax,
+                **kwargs,
+            )
+            return line_block
     
+
+
     @property
     def fluctuations(self):
         """
