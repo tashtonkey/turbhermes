@@ -319,7 +319,7 @@ def diagonal_slice_plotting(
             ax.set_yscale("symlog", linthresh=linear_threshold)
 
     # Plot separatrix
-    ax.plot_vline(0, "--")
+    ax.axvline(0, "--")
 
     if animate:
         _add_controls(anim, controls, t_label)
