@@ -319,7 +319,10 @@ def diagonal_slice_plotting(
             ax.set_yscale("symlog", linthresh=linear_threshold)
 
     # Plot separatrix
-    ax.axvline(0, ls = "--")
+    if sep_pos is None:
+        sep_pos = 0
+
+    ax.axvline(sep_pos, ls = "--", color= 'black')
 
     if animate:
         _add_controls(anim, controls, t_label)
@@ -332,3 +335,59 @@ def diagonal_slice_plotting(
         return anim
 
     return line_block
+
+def diagonal_slice(
+    data,
+    vmin=None,
+    vmax=None,
+    logscale=False,
+    save_as=None,
+    sep_pos=None,
+    ax=None,
+    aspect=None,
+    **kwargs,
+):
+    x = data.dims  # the data inputted should be a slice in the x-direction, to get a radial profile
+    if aspect is None:
+        aspect = "auto"
+    # Load values eagerly otherwise for some reason the plotting takes
+    # 100's of times longer - for some reason animatplot does not deal
+    # well with dask arrays!
+    image_data = data.values
+    variable = data.name
+
+    # If not specified, determine max and min values across entire data series
+    if vmax is None:
+        vmax = np.max(image_data)
+    if vmin is None:
+        vmin = np.min(image_data)
+
+    x_values, x_label = _get_R_coord_option(x, data)
+
+    if not ax:
+        fig, ax = plt.subplots()
+
+    ax.set_aspect(aspect)
+
+    # set range of plot
+    ax.set_ylim([vmin, vmax])
+
+    # Add title and axis labels
+    ax.set_title(variable)
+    ax.set_xlabel(x_label)
+    if "long_name" in data.attrs:
+        y_label = data.long_name
+    else:
+        y_label = variable
+    if "units" in data.attrs:
+        y_label = y_label + f" [{data.units}]"
+    ax.set_ylabel(y_label)
+
+    if sep_pos is None:
+        sep_pos = 0 # these are in normalised units, R_sep = 0
+
+    ax.axvline(sep_pos, ls = ':', color = 'black')
+
+    line_element = ax.plot(x_values, image_data)
+
+    return line_element

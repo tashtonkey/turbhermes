@@ -3,7 +3,7 @@ from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
 import xarray
 import matplotlib.pyplot as plt
-from .plotting import diagonal_slice_plotting
+from .plotting import diagonal_slice_plotting, diagonal_slice
 
 @register_dataset_accessor("utils")
 class UtilityDatasetAccessor(BoutDatasetAccessor):
@@ -408,7 +408,7 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         
     
     @property
-    def plot_diagonal_profile(self):
+    def plot_diagonal_profile(self, ax=None):
         """
         This take a radial profile at an arbitrary theta location, measured against real space distance from the separatrix
         
@@ -466,7 +466,36 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         ax.axvline(0, ls = ':', color = 'black')
         plt.show()
         
-        return 'Plotting'
+        return 
+    
+    def plot_diagonal_slice(
+        self,
+        save_as=None,
+        sep_pos=None,
+        ax=None,
+        **kwargs,
+    ):
+        data = self.data
+        variable = data.name
+        n_dims = len(data.dims)
+
+        if n_dims == 1:
+            print(
+                "{} data passed has {} dimensions - plotting 1D profile".format(variable, str(n_dims))
+            )
+            line_block = diagonal_slice(
+                data=data,
+                sep_pos=sep_pos,
+                save_as=save_as,
+                ax=ax,
+                **kwargs,
+            )
+            return line_block
+        else:
+            print(
+                "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
+            )
+            return
     
     def animate_diagonal_profile(
         self,
