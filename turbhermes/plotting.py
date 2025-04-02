@@ -140,12 +140,12 @@ def _get_R_coord_option(coord, da):
     label = "R-R_sep (m)"
     
     separatrix_index = da.metadata['ixseps1']
-    print(separatrix_index)
+    
     
     if separatrix_index < da.metadata['nx']:
         # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
         separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
-        print(separatrix_index_true)
+        
     else:
         separatrix_index_true = 0
 
@@ -358,9 +358,9 @@ def diagonal_slice(
 
     # If not specified, determine max and min values across entire data series
     if vmax is None:
-        vmax = np.max(image_data)
+        vmax = np.max(image_data)*1.1
     if vmin is None:
-        vmin = np.min(image_data)
+        vmin = np.min(image_data)*1.1
 
     x_values, x_label = _get_R_coord_option(x, data)
 
