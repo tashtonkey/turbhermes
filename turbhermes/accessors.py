@@ -407,67 +407,6 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         self.attrs = ds.attrs
         
     
-    @property
-    def plot_diagonal_profile(self, ax=None):
-        """
-        This take a radial profile at an arbitrary theta location, measured against real space distance from the separatrix
-        
-        It requires the 'self' to be selected at a particular time, with a theta index already selected. 
-        ### The show_location option shows a poloidal cross section of the plasma with a line over the location of the 
-        No to the above.
-        
-        This function will do one thing and one thing only, and that is plot a poloidal profile. It requires the input to
-        only be 1D, with a poloidal slice selected already.
-        
-        If the data input is zeta-averaged, it will plot the average. If not, it won't.
-        """
-        #poloidal_slice = bd.isel(theta = theta_index) # should already be pre-selected
-        R_values = np.array(self.coords['R'])
-        Z_values = np.array(self.coords['Z'])
-        # get the grid cell of the separatrix
-        
-        separatrix_index = self.metadata['ixseps1']
-        
-        if separatrix_index < self.metadata['nx']:
-            sep_R = R_values[separatrix_index]
-            sep_Z = Z_values[separatrix_index]
-        else:
-            sep_R = R_values[-1]
-            sep_Z = Z_values[-1]
-
-        # calculate the deviation of the coordinate from the separatrix location
-        physical_grid = []
-        for x_index in range(len(self.coords['x'])):
-            particular_R = R_values[x_index]
-            particular_Z = Z_values[x_index]
-            if x_index < separatrix_index:
-                delta_R = particular_R - sep_R 
-                delta_Z = particular_Z - sep_Z
-                grid_distance = -np.sqrt(delta_R**2 + delta_Z**2)
-                physical_grid.append(grid_distance)
-            elif x_index >= separatrix_index:
-                delta_R = particular_R - sep_R 
-                delta_Z = particular_Z - sep_Z
-                grid_distance = np.sqrt(delta_R**2 + delta_Z**2)
-                physical_grid.append(grid_distance)
-
-        physical_grid = np.array(physical_grid)
-        
-        self_name = str(self.attrs['long_name'])
-        
-        self_units = str(self.attrs['units'])
-
-        slice_amplitudes = np.array(self.data)
-        
-        fig, ax = plt.subplots()
-        ax.set_xlabel("R-R_sep (m)")
-        ax.set_ylabel(self_name + ' (' + self_units + ')')
-        ax.plot(physical_grid, slice_amplitudes)
-        ax.axvline(0, ls = ':', color = 'black')
-        plt.show()
-        
-        return 
-    
     def plot_diagonal_slice(
         self,
         save_as=None,
