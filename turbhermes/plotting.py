@@ -134,40 +134,56 @@ def _parse_coord_option(coord, axis_coords, da):
         return option_value, None
     
 def _get_R_coord_option(coord, da):
+    if 'ROMP' in da.coords:
+        R = da['ROMP']
+        separatrix_index = da.metadata['ixseps1']
+        if separatrix_index < da.metadata['nx']:
+            # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
+            separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
+            
+        else:
+            separatrix_index_true = 0
+        physical_grid = []
+        sep_R = R[separatrix_index_true]
 
-    Rxy = da['R']
-    Zxy = da['Z']
-    label = "R-R_sep (m)"
-    
-    separatrix_index = da.metadata['ixseps1']
-    
-    
-    if separatrix_index < da.metadata['nx']:
-        # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
-        separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
-        
+        physical_grid = R - sep_R
+        label = "R-R_sep (m)"
+
     else:
-        separatrix_index_true = 0
+        Rxy = da['R']
+        Zxy = da['Z']
+        label = "R-R_sep (m)"
+        
+        separatrix_index = da.metadata['ixseps1']
+        
+        
+        if separatrix_index < da.metadata['nx']:
+            # if the input is sliced in the x-direction, this index will not be the same as the ixseps value
+            separatrix_index_true = np.where(np.array(da.coords['x']) == separatrix_index)[0][0]
+            
+        else:
+            separatrix_index_true = 0
 
-    sep_R = Rxy[separatrix_index_true]
-    sep_Z = Zxy[separatrix_index_true]
-        # calculate the deviation of the coordinate from the separatrix location
-    physical_grid = []
-    for x_index in range(len(da.coords['x'])):
-        particular_R = Rxy[x_index]
-        particular_Z = Zxy[x_index]
-        if x_index < separatrix_index_true:
-            delta_R = particular_R - sep_R 
-            delta_Z = particular_Z - sep_Z
-            grid_distance = -np.sqrt(delta_R**2 + delta_Z**2)
-            physical_grid.append(grid_distance)
-        elif x_index >= separatrix_index_true:
-            delta_R = particular_R - sep_R 
-            delta_Z = particular_Z - sep_Z
-            grid_distance = np.sqrt(delta_R**2 + delta_Z**2)
-            physical_grid.append(grid_distance)
+        sep_R = Rxy[separatrix_index_true]
+        sep_Z = Zxy[separatrix_index_true]
+            # calculate the deviation of the coordinate from the separatrix location
+        physical_grid = []
+        for x_index in range(len(da.coords['x'])):
+            particular_R = Rxy[x_index]
+            particular_Z = Zxy[x_index]
+            if x_index < separatrix_index_true:
+                delta_R = particular_R - sep_R 
+                delta_Z = particular_Z - sep_Z
+                grid_distance = -np.sqrt(delta_R**2 + delta_Z**2)
+                physical_grid.append(grid_distance)
+            elif x_index >= separatrix_index_true:
+                delta_R = particular_R - sep_R 
+                delta_Z = particular_Z - sep_Z
+                grid_distance = np.sqrt(delta_R**2 + delta_Z**2)
+                physical_grid.append(grid_distance)
 
-    physical_grid = np.array(physical_grid)
+        physical_grid = np.array(physical_grid)
+    
     return physical_grid, label
 
 
