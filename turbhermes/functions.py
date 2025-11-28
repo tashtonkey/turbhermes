@@ -99,12 +99,12 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             ds['Apar_tilde'] = magnetic_fluctuation
 
             # now getting the delta-br delta-btheta terms 
-            jacobian = ds.data['J']
-            g_12 = ds.data['g_12']
-            g_22 = ds.data['g_22']
-            g_23 = ds.data['g_23']
-            g_11 = ds.data['g_11']
-            g_33 = ds.data['g_33']
+            jacobian = ds['J']
+            g_12 = ds['g_12']
+            g_22 = ds['g_22']
+            g_23 = ds['g_23']
+            g_11 = ds['g_11']
+            g_33 = ds['g_33']
             Apar = ds["Apar"][:,:,:,:]
 
             curl_A_x = (1/jacobian) * ( ((Apar * g_23)/(np.sqrt(g_22))).bout.ddy() - ((Apar * g_23)/(np.sqrt(g_22))).bout.ddz() ) * np.sqrt(g_11)
