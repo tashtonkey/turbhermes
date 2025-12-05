@@ -77,14 +77,14 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
 
         # normalised potential fluctuations
         if time_average_fluctuations==True:
-            potential_fluctuation_normalised = (ds["phi"][:,:,:,:] - ds["phi"][:,:,:,:].mean('zeta').mean('t'))/ds['Te'][:,:,:,:].mean('zeta').mean('t')
+            potential_fluctuation_normalised = (ds["phi"][:,:,:,:] - ds["phi"][:,:,:,:].mean('zeta').mean('t'))/ds['phi'][:,:,:,:].mean('zeta').mean('t')
         else:
-            potential_fluctuation_normalised = (ds["phi"][:,:,:,:] - ds["phi"][:,:,:,:].mean('zeta'))/ds['Te'][:,:,:,:].mean('zeta').mean('t')
+            potential_fluctuation_normalised = (ds["phi"][:,:,:,:] - ds["phi"][:,:,:,:].mean('zeta'))/ds['phi'][:,:,:,:].mean('zeta')
         potential_fluctuation_normalised.attrs['long_name'] = 'normalised potential fluctuation'
         potential_fluctuation_normalised.attrs['standard_name'] = 'normalised potential fluctuation'
         potential_fluctuation_normalised.attrs['conversion'] = 1
         potential_fluctuation_normalised.attrs['units'] = 'N/A'
-        ds['phi_tilde'] = potential_fluctuation        
+        ds['phi_tilde_norm'] = potential_fluctuation_normalised        
 
         # magnetic fluctuations
         if magnetic_flag == True:
@@ -97,6 +97,17 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             magnetic_fluctuation.attrs['conversion'] = 1
             magnetic_fluctuation.attrs['units'] = 'T m'
             ds['Apar_tilde'] = magnetic_fluctuation
+
+            # normalised potential fluctuations
+            if time_average_fluctuations==True:
+                magnetic_fluctuation_normalised = (ds["Apar"][:,:,:,:] - ds["Apar"][:,:,:,:].mean('zeta').mean('t'))/ds['Apar'][:,:,:,:].mean('zeta').mean('t')
+            else:
+                magnetic_fluctuation_normalised = (ds["Apar"][:,:,:,:] - ds["Apar"][:,:,:,:].mean('zeta'))/ds['Apar'][:,:,:,:].mean('zeta')
+            magnetic_fluctuation_normalised.attrs['long_name'] = 'normalised magnetic fluctuation'
+            magnetic_fluctuation_normalised.attrs['standard_name'] = 'normalised magnetic fluctuation'
+            magnetic_fluctuation_normalised.attrs['conversion'] = 1
+            magnetic_fluctuation_normalised.attrs['units'] = 'N/A'
+            ds['Apar_tilde_norm'] = magnetic_fluctuation_normalised    
 
             # now getting the delta-br delta-btheta terms 
             jacobian = ds['J']
