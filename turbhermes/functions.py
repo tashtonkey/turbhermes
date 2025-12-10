@@ -177,6 +177,28 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
 
         dictionary_list[label] = ds
 
+        # turbulent ion energy flux <\delta v_x \delta Pi>
+        if time_average_fluctuations==True:
+            turb_ion_pressure_flux = (v_tilde_x * ion_pressure_fluctuation).mean('zeta')# not taking time average for this .mean('time')
+        else:
+            turb_ion_pressure_flux = (v_tilde_x * ion_pressure_fluctuation).mean('zeta')
+        turb_ion_pressure_flux.attrs['long_name'] = 'turbulent ion pressure flux'
+        turb_ion_pressure_flux.attrs['standard_name'] = 'turbulent ion pressure flux'
+        turb_ion_pressure_flux.attrs['conversion'] = 1
+        turb_ion_pressure_flux.attrs['units'] = 'W / m^2'
+        ds['turb_Pi_flux'] = turb_ion_pressure_flux
+
+        # turbulent electron energy flux <\delta v_x \delta Pi>
+        if time_average_fluctuations==True:
+            turb_electron_pressure_flux = (v_tilde_x * electron_pressure_fluctuation).mean('zeta')# not taking time average for this .mean('time')
+        else:
+            turb_electron_pressure_flux = (v_tilde_x * electron_pressure_fluctuation).mean('zeta')
+        turb_electron_pressure_flux.attrs['long_name'] = 'turbulent electron pressure flux'
+        turb_electron_pressure_flux.attrs['standard_name'] = 'turbulent electron pressure flux'
+        turb_electron_pressure_flux.attrs['conversion'] = 1
+        turb_electron_pressure_flux.attrs['units'] = 'W / m^2'
+        ds['turb_Pe_flux'] = turb_electron_pressure_flux
+
     return dictionary_list
 
 def extract_series_data(ds_dict, variable_name):
