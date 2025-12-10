@@ -153,7 +153,27 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         turb_particle_flux.attrs['units'] = 'm^2 / s'
         ds['turb_particle_flux'] = turb_particle_flux
 
-        
+        # ion pressure fluctuations
+        if time_average_fluctuations==True:
+            ion_pressure_fluctuation = ds["Pi"][:,:,:,:] - ds["Pi"][:,:,:,:].mean('zeta').mean('t')
+        else:
+            ion_pressure_fluctuation = ds["Pi"][:,:,:,:] - ds["Pi"][:,:,:,:].mean('zeta')
+        ion_pressure_fluctuation.attrs['long_name'] = 'ion pressure fluctuation'
+        ion_pressure_fluctuation.attrs['standard_name'] = 'ion pressure fluctuation'
+        ion_pressure_fluctuation.attrs['conversion'] = 1
+        ion_pressure_fluctuation.attrs['units'] = 'Pa'
+        ds['Pi_tilde'] = ion_pressure_fluctuation
+
+        # electron pressure fluctuations
+        if time_average_fluctuations==True:
+            electron_pressure_fluctuation = ds["Pe"][:,:,:,:] - ds["Pe"][:,:,:,:].mean('zeta').mean('t')
+        else:
+            electron_pressure_fluctuation = ds["Pe"][:,:,:,:] - ds["Pe"][:,:,:,:].mean('zeta')
+        electron_pressure_fluctuation.attrs['long_name'] = 'electron pressure fluctuation'
+        electron_pressure_fluctuation.attrs['standard_name'] = 'electron pressure fluctuation'
+        electron_pressure_fluctuation.attrs['conversion'] = 1
+        electron_pressure_fluctuation.attrs['units'] = 'Pa'
+        ds['Pe_tilde'] = electron_pressure_fluctuation
 
         dictionary_list[label] = ds
 
