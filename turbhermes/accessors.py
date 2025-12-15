@@ -363,12 +363,12 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             V_ExB_y = ((phi_ddz * g_12 - phi_ddx * g_23) / (g_22)) * np.sqrt(g_22)
             V_ExB_z = ((phi_ddx * g_22 - phi_ddy * g_12) / (g_22)) * np.sqrt(g_33)
 
-            V_ExB_x.attrs['long_name'] = 'radial ExB velocity'
-            V_ExB_y.attrs['long_name'] = 'poloidal ExB velocity'
-            V_ExB_z.attrs['long_name'] = 'toroidal ExB velocity'
-            V_ExB_x.attrs['standard_name'] = 'radial ExB velocity'
-            V_ExB_y.attrs['standard_name'] = 'poloidal ExB velocity'
-            V_ExB_z.attrs['standard_name'] = 'toroidal ExB velocity'
+            V_ExB_x.attrs['long_name'] = 'x ExB velocity component'
+            V_ExB_y.attrs['long_name'] = 'y ExB velocity component'
+            V_ExB_z.attrs['long_name'] = 'z ExB velocity component'
+            V_ExB_x.attrs['standard_name'] = 'x ExB velocity component'
+            V_ExB_y.attrs['standard_name'] = 'y ExB velocity component'
+            V_ExB_z.attrs['standard_name'] = 'z ExB velocity component'
             V_ExB_x.attrs['conversion'] = 1
             V_ExB_y.attrs['conversion'] = 1
             V_ExB_z.attrs['conversion'] = 1
@@ -379,6 +379,25 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             self.data['V_ExB_x'] = V_ExB_x
             self.data['V_ExB_y'] = V_ExB_y
             self.data['V_ExB_z'] = V_ExB_z
+
+            sigma_B_pol = 1 # this should be the sigma-b-pol, check what the way to get this is.
+            
+            V_ExB_r = V_ExB_x * sigma_B_pol
+            V_ExB_theta = V_ExB_y * np.sqrt(1/(g22 * g_22))
+            V_ExB_zeta = V_ExB_y * (g_23/np.sqrt(g_22 * g_33)) + V_ExB_z
+
+            V_ExB_r.attrs['long_name'] = 'radial ExB velocity component'
+            V_ExB_theta.attrs['long_name'] = 'theta ExB velocity component'
+            V_ExB_zeta.attrs['long_name'] = 'zeta ExB velocity component'
+            V_ExB_r.attrs['standard_name'] = 'radial ExB velocity component'
+            V_ExB_theta.attrs['standard_name'] = 'theta ExB velocity component'
+            V_ExB_zeta.attrs['standard_name'] = 'zeta ExB velocity component'
+            V_ExB_r.attrs['conversion'] = 1
+            V_ExB_theta.attrs['conversion'] = 1
+            V_ExB_zeta.attrs['conversion'] = 1
+            V_ExB_r.attrs['units'] = 'm / s'
+            V_ExB_theta.attrs['units'] = 'm / s'
+            V_ExB_zeta.attrs['units'] = 'm / s'
 
         return "Calculated"
 

@@ -14,21 +14,21 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ylower_core = ds.regions['core'].ylower_ind
         yupper_core = ds.regions['core'].yupper_ind
 
-        mean_ZF = ds["V_ExB_y"][:,:,ylower_core:yupper_core,:].mean('theta').mean('zeta')
+        mean_ZF = ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('theta').mean('zeta')
         mean_ZF.attrs['long_name'] = 'zonal flow velocity'
         mean_ZF.attrs['standard_name'] = 'zonal flow velocity'
         mean_ZF.attrs['conversion'] = 1
         mean_ZF.attrs['units'] = 'm / s'
         ds['mean_ZF'] = mean_ZF
 
-        v_tilde_y = ds["V_ExB_y"][:,:,:,:]-ds["V_ExB_y"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
+        v_tilde_y = ds["V_ExB_theta"][:,:,:,:]-ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
         v_tilde_y.attrs['long_name'] = 'poloidal fluctuation velocity'
         v_tilde_y.attrs['standard_name'] = 'poloidal fluctuation velocity'
         v_tilde_y.attrs['conversion'] = 1
         v_tilde_y.attrs['units'] = 'm / s'
         ds['v_tilde_y'] = v_tilde_y
 
-        v_tilde_x = ds["V_ExB_x"][:,:,:,:]-ds["V_ExB_x"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
+        v_tilde_x = ds["V_ExB_r"][:,:,:,:]-ds["V_ExB_r"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
         v_tilde_x.attrs['long_name'] = 'radial fluctuation velocity'
         v_tilde_x.attrs['standard_name'] = 'radial fluctuation velocity'
         v_tilde_x.attrs['conversion'] = 1
@@ -116,6 +116,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             g_23 = ds['g_23']
             g_11 = ds['g_11']
             g_33 = ds['g_33']
+            g22 = ds['g22']
             Apar = ds["Apar"][:,:,:,:]
 
             curl_A_x = (1/jacobian) * ( ((Apar * g_23)/(np.sqrt(g_22))).bout.ddy() - ((Apar * g_23)/(np.sqrt(g_22))).bout.ddz() ) * np.sqrt(g_11)
@@ -141,6 +142,38 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             ds['delta_B_z'] = curl_A_z
 
             # calculate maxwell stress. check if it needs to be y or theta, that will need a conversion.
+
+            sigma_B_pol = 1 # this should be the sigma-b-pol, check what the way to get this is.
+
+            delta_B_r = curl_A_x * sigma_B_pol
+            delta_B_theta = curl_A_y * np.sqrt(1/(g22 * g_22))
+            delta_B_zeta = curl_A_y * (g_23/np.sqrt(g_22 * g_33)) + curl_A_z
+
+            delta_B_r.attrs['long_name'] = 'radial delta-B component'
+            delta_B_theta.attrs['long_name'] = 'theta delta-B component'
+            delta_B_zeta.attrs['long_name'] = 'zeta delta-B component'
+            delta_B_r.attrs['standard_name'] = 'radial delta-B component'
+            delta_B_theta.attrs['standard_name'] = 'theta delta-B component'
+            delta_B_zeta.attrs['standard_name'] = 'zeta delta-B component'
+            delta_B_r.attrs['conversion'] = 1
+            delta_B_theta.attrs['conversion'] = 1
+            delta_B_zeta.attrs['conversion'] = 1
+            delta_B_r.attrs['units'] = 'T'
+            delta_B_theta.attrs['units'] = 'T'
+            delta_B_zeta.attrs['units'] = 'T'
+
+            ds['delta_B_r'] = delta_B_r
+            ds['delta_B_theta'] = delta_B_theta
+            ds['delta_B_zeta'] = delta_B_zeta
+
+            # maxwell stress
+
+            maxwell_stress = (delta_B_r * delta_B_theta).mean('zeta').mean('theta')
+            maxwell_stress.attrs['long_name'] = 'Maxwell Stress'
+            maxwell_stress.attrs['standard_name'] = 'Maxwell Stress'
+            maxwell_stress.attrs['conversion'] = 1
+            maxwell_stress.attrs['units'] = 'T^2'
+            ds['maxwell_stress'] = maxwell_stress
 
         # turbulent particle flux <\delta v_x \delta n>
         if time_average_fluctuations==True:
