@@ -411,8 +411,6 @@ def diagonal_slice(
 
 fig, ax = plt.subplots(2,2) # whatever, get the axes first. then plot the desired thing
 
-da.turbo.plot_heatmap()
-
 def plot_heatmap(
     data,
     vmin=None,
