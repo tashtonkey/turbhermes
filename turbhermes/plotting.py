@@ -408,9 +408,6 @@ def diagonal_slice(
 
     return line_element
 
-
-fig, ax = plt.subplots(2,2) # whatever, get the axes first. then plot the desired thing
-
 def plot_heatmap(
     data,
     vmin=None,

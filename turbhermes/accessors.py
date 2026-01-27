@@ -3,7 +3,7 @@ from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
 import xarray
 import matplotlib.pyplot as plt
-from .plotting import diagonal_slice_plotting, diagonal_slice
+from .plotting import diagonal_slice_plotting, diagonal_slice, plot_heatmap
 
 @register_dataset_accessor("utils")
 class UtilityDatasetAccessor(BoutDatasetAccessor):
@@ -455,6 +455,42 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
             )
             return
     
+    def plot_heat_map(
+        self,
+        save_as=None,
+        sep_pos=None,
+        ax=None,
+        **kwargs,
+    ):
+        data = self.data
+        variable = data.name
+        n_dims = len(data.dims)
+
+        if n_dims == 2:
+            if 't' in data.dims:
+                print(
+                    "{} data passed has {} dimensions - plotting 2D time-series heatmap".format(variable, str(n_dims))
+                )
+                pcl = plot_heatmap(
+                    data=data,
+                    sep_pos=sep_pos,
+                    save_as=save_as,
+                    ax=ax,
+                    **kwargs,
+                )
+                return pcl
+            else:
+                print(
+                "{} data passed has does not have time dimension".format(variable)
+            )
+                return
+        else:
+            print(
+                "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
+            )
+            return
+
+
     def animate_diagonal_profile(
         self,
         animate_over=None,
