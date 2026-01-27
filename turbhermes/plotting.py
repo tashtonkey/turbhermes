@@ -407,3 +407,53 @@ def diagonal_slice(
     line_element = ax.plot(x_values, image_data)
 
     return line_element
+
+
+fig, ax = plt.subplots(2,2) # whatever, get the axes first. then plot the desired thing
+
+da.turbo.plot_heatmap()
+
+def plot_heatmap(
+    data,
+    vmin=None,
+    vmax=None,
+    logscale=False,
+    sep_pos=None,
+    ax=None,
+    aspect=None,
+    **kwargs,
+):
+    dims = data.dims # assume we should have time and x. so dims = ['t', 'x']
+    if aspect is None:
+        aspect = "auto"
+    if 'x' in dims:
+        x_axis_grid, x_label = _get_R_coord_option('x', data)
+    else:
+        x_axis_grid= data[dims[1]]
+        x_label = str(dims[1])
+
+    time_array = data['t'].data
+    amplitude_array = data.values # should already have been sliced to the desired coordinates
+    variable = data.name
+
+    if not ax:
+        fig, ax = plt.subplots()
+
+    pcl = ax.pcolormesh(x_axis_grid[2:-2], time_array, amplitude_array, vmin=vmin, vmax=vmax)
+    ax.set_xlabel(x_label)
+    if sep_pos is None:
+        sep_pos = 0 # these are in normalised units, R_sep = 0
+
+    ax.axvline(sep_pos, ls = ':', color = 'black')
+
+    ax.set_title(variable)
+    ax.set_xlabel(x_label)
+    if "long_name" in data.attrs:
+        y_label = data.long_name
+    else:
+        y_label = variable
+    if "units" in data.attrs:
+        y_label = y_label + f" [{data.units}]"
+    ax.set_ylabel(y_label)
+
+    return pcl

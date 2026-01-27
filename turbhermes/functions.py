@@ -1,5 +1,7 @@
 import numpy as np
 import xarray
+from scipy.stats import skew
+from scipy.stats import kurtosis
 from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 
 def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuations=False):
@@ -283,3 +285,32 @@ def get_physical_grid(da):
     physical_grid = np.array(physical_grid)
 
     return physical_grid, label
+
+def get_statistics(da_slice):
+    mean = np.sqrt((da_slice*da_slice).mean())
+    stdev = (np.std(da_slice))
+    skews = (skew(da_slice, axis = None))
+    kurt = (kurtosis(da_slice, axis = None))
+    return mean, stdev, skews, kurt
+
+def get_radial_statistics(da, x_array):
+    mean_list=[]
+    stdev_list=[]
+    skews_list=[]
+    kurt_list=[]
+
+    for xcoord in x_array:
+        da_slice = da[:,xcoord,:]
+        mean, stdev, skews, kurt = get_statistics(da_slice)
+
+        mean_list.append(mean)
+        stdev_list.append(stdev)
+        skews_list.append(skews)
+        kurt_list.append(kurt)
+
+    mean_list=np.array(mean_list)
+    stdev_list=np.array(stdev_list)
+    skews_list=np.array(skews_list)
+    kurt_list=np.array(kurt_list)
+
+    return mean_list, stdev_list, skews_list, kurt_list
