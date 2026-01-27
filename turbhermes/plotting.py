@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import animatplot as amp
 from matplotlib.animation import PillowWriter
-from .functions import get_radial_statistics
+from .functions import get_radial_statistics, get_statistics
 
 def _normalise_time_coord(time_values):
     """
@@ -506,3 +506,47 @@ def mean_diagonal_slice(
     f2 = ax.fill_between(x_values, (mean - stdev), (mean + stdev), color =color, alpha=0.2)
 
     return f1, f2
+
+
+def fluctuation_cross_plot(
+        data_1, 
+        data_2,
+        ax=None,
+        aspect='equal'
+):
+    # get the standard deviation of these data
+    # then histogram it.
+
+    data_1_values = data_1.values
+    data_2_values = data_2.values
+
+    data_1_name = data_1.name
+    data_2_name = data_2.name
+
+    dummy, stdev_1, dummy, dummy = get_statistics(data_1_values)
+    dummy, stdev_2, dummy, dummy = get_statistics(data_2_values)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+
+    hist = ax.hist2d(data_1_values/stdev_1, data_2_values/stdev_2, bins = [50,50], density =False, range = [[-4,4],[-4,4]], cmap = 'plasma')
+
+    ax.set_xlabel(data_1_name)
+    ax.set_ylabel(data_2_name)
+
+    ax.set_aspect(aspect)
+
+    """
+    cbarEMv = fig.colorbar(hEMv[3], ax=ax[0,0])
+    cbarEMnv = fig.colorbar(hEMnv[3], ax=ax[0,1])
+    cbarESv = fig.colorbar(hESv[3], ax=ax[1,0])
+    cbarESnv = fig.colorbar(hESnv[3], ax=ax[1,1])
+
+    cbarEMv.set_label('Probability')
+    cbarEMnv.set_label('Probability')
+    cbarESv.set_label('Probability')
+    cbarESnv.set_label('Probability')
+    """
+
+    return hist
