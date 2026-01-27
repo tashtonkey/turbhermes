@@ -399,6 +399,11 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             V_ExB_theta.attrs['units'] = 'm / s'
             V_ExB_zeta.attrs['units'] = 'm / s'
 
+            self.data['V_ExB_r'] = V_ExB_r
+            self.data['V_ExB_theta'] = V_ExB_theta
+            self.data['V_ExB_zeta'] = V_ExB_zeta
+            
+
         return "Calculated"
 
 """
