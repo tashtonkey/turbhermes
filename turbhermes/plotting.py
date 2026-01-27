@@ -516,6 +516,7 @@ def fluctuation_cross_plot(
 ):
     # get the standard deviation of these data
     # then histogram it.
+    # fluctuation_cross_plot(ds['ne_tilde'][:,10,8,:], ds['v_tilde_x'][:,10,8,:], ax=ax)
 
     data_1_values = data_1.values
     data_2_values = data_2.values
@@ -526,11 +527,17 @@ def fluctuation_cross_plot(
     dummy, stdev_1, dummy, dummy = get_statistics(data_1_values)
     dummy, stdev_2, dummy, dummy = get_statistics(data_2_values)
 
+    print(stdev_1)
+    print(stdev_2)
+
+    data_1_flatten = data_1_values.flatten()
+    data_2_flatten = data_2_values.flatten()
+
     if ax is None:
         fig, ax = plt.subplots()
 
 
-    hist = ax.hist2d(data_1_values/stdev_1, data_2_values/stdev_2, bins = [50,50], density =False, range = [[-4,4],[-4,4]], cmap = 'plasma')
+    hist = ax.hist2d(data_1_flatten/stdev_1, data_2_flatten/stdev_2, bins = [50,50], density =False, range = [[-4,4],[-4,4]], cmap = 'plasma')
 
     ax.set_xlabel(data_1_name)
     ax.set_ylabel(data_2_name)
