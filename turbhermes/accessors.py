@@ -477,13 +477,9 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
                 data,
                 color,
                 label,
-                vmin=None,
-                vmax=None,
-                logscale=False,
-                save_as=None,
-                sep_pos=None,
-                ax=None,
-                aspect=None,
+                save_as=save_as,
+                sep_pos=sep_pos,
+                ax=ax,
                 **kwargs,
             )
             return f1, f2

@@ -300,7 +300,7 @@ def get_radial_statistics(da, x_array):
     kurt_list=[]
 
     for xcoord in x_array:
-        da_slice = da[:,xcoord,:]
+        da_slice = da.isel(x=xcoord)[:,:]
         mean, stdev, skews, kurt = get_statistics(da_slice)
 
         mean_list.append(mean)

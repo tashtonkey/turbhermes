@@ -476,6 +476,8 @@ def mean_diagonal_slice(
         vmax = (np.max(mean)+np.max(stdev))*1.1
     if vmin is None:
         vmin = (np.min(mean)-np.max(stdev))*1.1
+    
+    
     if not ax:
         fig, ax = plt.subplots()
 
