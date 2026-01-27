@@ -501,6 +501,6 @@ def mean_diagonal_slice(
     ax.axvline(sep_pos, ls = ':', color = 'black')
 
     f1 = ax.plot(x_values, mean, color =color, label = label)
-    f2 = ax.fill_between(x_values (mean - stdev), (mean + stdev), color =color, alpha=0.2)
+    f2 = ax.fill_between(x_values, (mean - stdev), (mean + stdev), color =color, alpha=0.2)
 
     return f1, f2
