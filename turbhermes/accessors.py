@@ -3,7 +3,7 @@ from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 import numpy as np
 import xarray
 import matplotlib.pyplot as plt
-from .plotting import diagonal_slice_plotting, diagonal_slice, plot_heatmap
+from .plotting import *
 
 @register_dataset_accessor("utils")
 class UtilityDatasetAccessor(BoutDatasetAccessor):
@@ -449,6 +449,44 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
                 **kwargs,
             )
             return line_block
+        else:
+            print(
+                "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
+            )
+            return
+        
+    
+    def plot_mean_diagonal_slice(
+        self,
+        color,
+        label,
+        save_as=None,
+        sep_pos=None,
+        ax=None,
+        **kwargs,
+    ):
+        data = self.data
+        variable = data.name
+        n_dims = len(data.dims)
+
+        if n_dims == 3:
+            print(
+                "{} data passed has {} dimensions - plotting 1D profile, average in time and zeta".format(variable, str(n_dims))
+            )
+            f1, f2 = mean_diagonal_slice(
+                data,
+                color,
+                label,
+                vmin=None,
+                vmax=None,
+                logscale=False,
+                save_as=None,
+                sep_pos=None,
+                ax=None,
+                aspect=None,
+                **kwargs,
+            )
+            return f1, f2
         else:
             print(
                 "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
