@@ -469,7 +469,7 @@ def mean_diagonal_slice(
     x_values, x_label = _get_R_coord_option('x', data)
     variable = data.name
 
-    mean, stdev, skews, kurt = get_radial_statistics(image_data, x_array = x_values)
+    mean, stdev, skews, kurt = get_radial_statistics(image_data, x_array = data['x'])
 
         # If not specified, determine max and min values across entire data series
     if vmax is None:
