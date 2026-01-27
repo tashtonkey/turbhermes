@@ -434,7 +434,7 @@ def plot_heatmap(
     if not ax:
         fig, ax = plt.subplots()
 
-    pcl = ax.pcolormesh(x_axis_grid[2:-2], time_array, amplitude_array, vmin=vmin, vmax=vmax)
+    pcl = ax.pcolormesh(x_axis_grid, time_array, amplitude_array, vmin=vmin, vmax=vmax)
     ax.set_xlabel(x_label)
     if sep_pos is None:
         sep_pos = 0 # these are in normalised units, R_sep = 0
