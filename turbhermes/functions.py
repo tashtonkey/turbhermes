@@ -4,7 +4,11 @@ from scipy.stats import skew
 from scipy.stats import kurtosis
 from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 
-def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuations=False):
+def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuations=False, AA = 2):
+    # magnetic_flag = whether there is A-parallel in the dataset
+    # time_average_fluctuations = take the time average when calculating delta_n etc
+    # AA = number for dominant ion species. Assumes deuterium.
+
     for label in dictionary_list:
         ds = dictionary_list[label]
         ds.utils.calculate_temp
@@ -13,6 +17,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ds.utils.calculate_perpendicular_velocity
 
         # get the core boundaries for the theta averages
+        # THIS WILL BREAK FOR ST40 BECAUSE DISCONNECTED DOUBLE NULL
         ylower_core = ds.regions['core'].ylower_ind
         yupper_core = ds.regions['core'].yupper_ind
 
@@ -21,7 +26,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         mean_ZF.attrs['standard_name'] = 'zonal flow velocity'
         mean_ZF.attrs['conversion'] = 1
         mean_ZF.attrs['units'] = 'm / s'
-        ds['mean_ZF'] = mean_ZF
+        ds['mean_ZF'] = mean_ZF # only has radial and time dimensions
 
         v_tilde_y = ds["V_ExB_theta"][:,:,:,:]-ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
         v_tilde_y.attrs['long_name'] = 'poloidal fluctuation velocity'
@@ -177,17 +182,6 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             maxwell_stress.attrs['units'] = 'T^2'
             ds['maxwell_stress'] = maxwell_stress
 
-        # turbulent particle flux <\delta v_x \delta n>
-        if time_average_fluctuations==True:
-            turb_particle_flux = (v_tilde_x * density_fluctuation).mean('zeta')# not taking time average for this .mean('time')
-        else:
-            turb_particle_flux = (v_tilde_x * density_fluctuation).mean('zeta')
-        turb_particle_flux.attrs['long_name'] = 'turbulent particle flux'
-        turb_particle_flux.attrs['standard_name'] = 'turbulent particle flux'
-        turb_particle_flux.attrs['conversion'] = 1
-        turb_particle_flux.attrs['units'] = 'm^2 / s'
-        ds['turb_particle_flux'] = turb_particle_flux
-
         # ion pressure fluctuations
         if time_average_fluctuations==True:
             ion_pressure_fluctuation = ds["Pi"][:,:,:,:] - ds["Pi"][:,:,:,:].mean('zeta').mean('t')
@@ -210,7 +204,46 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         electron_pressure_fluctuation.attrs['units'] = 'Pa'
         ds['Pe_tilde'] = electron_pressure_fluctuation
 
-        dictionary_list[label] = ds
+        # Thermal free energy density
+        if time_average_fluctuations==True:
+            mean_density = ds["Ne"].mean('zeta').mean('t')
+            mean_temp = ds["Te"].mean('zeta').mean('t')
+        else:
+            mean_density = ds["Ne"].mean('zeta')
+            mean_temp = ds["Te"].mean('zeta')
+        turbulent_free_energy = 0.5 * mean_density * mean_temp * density_fluctuation_normalised**2
+        turbulent_free_energy.attrs['long_name'] = 'turbulent free energy'
+        turbulent_free_energy.attrs['standard_name'] = 'turbulent free energy'
+        turbulent_free_energy.attrs['conversion'] = 1
+        turbulent_free_energy.attrs['units'] = 'eV'
+        ds['turb_free_energy'] = turbulent_free_energy
+
+        # turbulent flow energy density
+        turbulent_flow_energy = 0.5 * mean_density * AA * 1.67e-27 * ((v_tilde_x**2).mean('zeta') + (v_tilde_y**2).mean('zeta'))
+        turbulent_flow_energy.attrs['long_name'] = 'turbulent flow energy density'
+        turbulent_flow_energy.attrs['standard_name'] = 'turbulent flow energy density'
+        turbulent_flow_energy.attrs['conversion'] = 1
+        turbulent_flow_energy.attrs['units'] = 'J m^-3'
+        ds['turb_flow_energy'] = turbulent_flow_energy
+
+        # zonal flow energy density
+        zonal_flow_energy = 0.5 * mean_density * AA * 1.67e-27 * (mean_ZF)**2
+        zonal_flow_energy.attrs['long_name'] = 'zonal flow energy density'
+        zonal_flow_energy.attrs['standard_name'] = 'zonal flow energy density'
+        zonal_flow_energy.attrs['conversion'] = 1
+        zonal_flow_energy.attrs['units'] = 'J m^-3'
+        ds['zonal_flow_energy'] = zonal_flow_energy
+
+        # turbulent particle flux <\delta v_x \delta n>
+        if time_average_fluctuations==True:
+            turb_particle_flux = (v_tilde_x * density_fluctuation).mean('zeta')# not taking time average for this .mean('time')
+        else:
+            turb_particle_flux = (v_tilde_x * density_fluctuation).mean('zeta')
+        turb_particle_flux.attrs['long_name'] = 'turbulent particle flux'
+        turb_particle_flux.attrs['standard_name'] = 'turbulent particle flux'
+        turb_particle_flux.attrs['conversion'] = 1
+        turb_particle_flux.attrs['units'] = 'm^2 / s'
+        ds['turb_particle_flux'] = turb_particle_flux
 
         # turbulent ion energy flux <\delta v_x \delta Pi>
         if time_average_fluctuations==True:
@@ -233,6 +266,11 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         turb_electron_pressure_flux.attrs['conversion'] = 1
         turb_electron_pressure_flux.attrs['units'] = 'W / m^2'
         ds['turb_Pe_flux'] = turb_electron_pressure_flux
+
+        # Record the new, updated, ds in the list of dictionaries.
+        dictionary_list[label] = ds
+    
+    # now we return the dictionary list.
 
     return dictionary_list
 

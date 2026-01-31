@@ -516,6 +516,7 @@ def fluctuation_cross_plot(
 ):
     # get the standard deviation of these data
     # then histogram it.
+    # must select r and theta coords before inputting data_1 and data_2
     # fluctuation_cross_plot(ds['ne_tilde'][:,10,8,:], ds['v_tilde_x'][:,10,8,:], ax=ax)
 
     data_1_values = data_1.values
