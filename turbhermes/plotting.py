@@ -507,6 +507,79 @@ def mean_diagonal_slice(
 
     return f1, f2
 
+def statistic_diagonal_slice(
+    data,
+    color,
+    label,
+    statistic='mean',
+    vmin=None,
+    vmax=None,
+    logscale=False,
+    save_as=None,
+    sep_pos=None,
+    ax=None,
+    aspect=None,
+    **kwargs,
+):
+    x = data.dims  # the data inputted should be a slice in the x-direction, to get a radial profile
+    if aspect is None:
+        aspect = "auto"
+ 
+    image_data = data.values
+    x_values, x_label = _get_R_coord_option('x', data)
+    variable = data.name
+
+    mean, stdev, skews, kurt = get_radial_statistics(image_data, x_array = data['x'])
+
+        # If not specified, determine max and min values across entire data series
+    #if vmax is None:
+    #    vmax = (np.max(mean)+np.max(stdev))*1.1
+    #if vmin is None:
+    #    vmin = (np.min(mean)-np.max(stdev))*1.1
+    
+    if statistic == 'stdev':
+        statistic_value = stdev
+        statistic_label = 'standard deviation'
+    elif statistic == 'skews':
+        statistic_value = skews
+        statistic_label = 'skewness'
+    elif statistic == 'kurts':
+        statistic_value = kurt
+        statistic_label = 'kurtosis'
+    else:
+        statistic_value = mean
+        statistic_label = 'mean'
+    
+
+    if not ax:
+        fig, ax = plt.subplots()
+
+    ax.set_aspect(aspect)
+
+    # set range of plot
+    ax.set_ylim([vmin, vmax])
+
+    # Add title and axis labels
+    ax.set_title(variable)
+    ax.set_xlabel(x_label)
+    if "long_name" in data.attrs:
+        y_label = data.long_name
+    else:
+        y_label = variable
+    
+    ax.set_ylabel(y_label + " " + statistic_label)
+
+    if sep_pos is None:
+        sep_pos = 0 # these are in normalised units, R_sep = 0
+
+    ax.axvline(sep_pos, ls = ':', color = 'black')
+
+    f1 = ax.plot(x_values, statistic_value, color =color, label = label)
+    
+
+    return f1
+
+
 
 def fluctuation_cross_plot(
         data_1, 

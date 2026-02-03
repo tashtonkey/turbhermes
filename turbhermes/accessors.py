@@ -493,6 +493,46 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
                 "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
             )
             return
+        
+    def plot_statistics_diagonal_slice(
+        self,
+        color,
+        label,
+        statistic = 'mean',
+        save_as=None,
+        sep_pos=None,
+        ax=None,
+        **kwargs,
+    ):
+        data = self.data
+        variable = data.name
+        n_dims = len(data.dims)
+
+        if statistic in ['mean', 'stdev','skews','kurt']:
+            if n_dims == 3:
+                print(
+                    "{} data passed has {} dimensions - plotting 1D profile, average in time and zeta".format(variable, str(n_dims))
+                )
+                f1 = statistic_diagonal_slice(
+                    data,
+                    color,
+                    label,
+                    statistic = statistic,
+                    save_as=save_as,
+                    sep_pos=sep_pos,
+                    ax=ax,
+                    **kwargs,
+                )
+                return f1
+            else:
+                print(
+                    "{} data passed has {} dimensions - incorrect dimensions".format(variable, str(n_dims))
+                )
+                return
+        else:
+            print(
+                "{} is not a valid statistic. Choose one of  'mean', 'stdev', 'skews', 'kurt' ".format(statistic)
+            )
     
     def plot_heat_map(
         self,
