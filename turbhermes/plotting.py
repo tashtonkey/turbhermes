@@ -511,7 +511,7 @@ def statistic_diagonal_slice(
     data,
     color,
     label,
-    statistic='mean',
+    statistic,
     vmin=None,
     vmax=None,
     logscale=False,
