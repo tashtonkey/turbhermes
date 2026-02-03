@@ -405,7 +405,7 @@ def diagonal_slice(
 
     ax.axvline(sep_pos, ls = ':', color = 'black')
 
-    line_element = ax.plot(x_values, image_data)
+    line_element = ax.plot(x_values, image_data, **kwargs)
 
     return line_element
 
