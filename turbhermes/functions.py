@@ -211,15 +211,15 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         else:
             mean_density = ds["Ne"].mean('zeta')
             mean_temp = ds["Te"].mean('zeta')
-        turbulent_free_energy = 0.5 * mean_density * mean_temp * density_fluctuation_normalised**2
+        turbulent_free_energy = 0.5 * 1.6e-19 * density_fluctuation_normalised**2 * mean_density * mean_temp
         turbulent_free_energy.attrs['long_name'] = 'turbulent free energy'
         turbulent_free_energy.attrs['standard_name'] = 'turbulent free energy'
         turbulent_free_energy.attrs['conversion'] = 1
-        turbulent_free_energy.attrs['units'] = 'eV'
+        turbulent_free_energy.attrs['units'] = 'J m^-3'
         ds['turb_free_energy'] = turbulent_free_energy
 
         # turbulent flow energy density
-        turbulent_flow_energy = 0.5 * mean_density * AA * 1.67e-27 * ((v_tilde_x**2).mean('zeta') + (v_tilde_y**2).mean('zeta'))
+        turbulent_flow_energy = 0.5 * ((v_tilde_x**2).mean('zeta') + (v_tilde_y**2).mean('zeta'))* mean_density * AA * 1.67e-27 
         turbulent_flow_energy.attrs['long_name'] = 'turbulent flow energy density'
         turbulent_flow_energy.attrs['standard_name'] = 'turbulent flow energy density'
         turbulent_flow_energy.attrs['conversion'] = 1
@@ -227,7 +227,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ds['turb_flow_energy'] = turbulent_flow_energy
 
         # zonal flow energy density
-        zonal_flow_energy = 0.5 * mean_density * AA * 1.67e-27 * (mean_ZF)**2
+        zonal_flow_energy = 0.5 * (mean_ZF)**2 * mean_density * AA * 1.67e-27 
         zonal_flow_energy.attrs['long_name'] = 'zonal flow energy density'
         zonal_flow_energy.attrs['standard_name'] = 'zonal flow energy density'
         zonal_flow_energy.attrs['conversion'] = 1
