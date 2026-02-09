@@ -465,7 +465,7 @@ def mean_diagonal_slice(
     if aspect is None:
         aspect = "auto"
  
-    image_data = data.values
+    image_data = data # not data.values because then cannot isel later
     x_values, x_label = _get_R_coord_option('x', data)
     variable = data.name
 
