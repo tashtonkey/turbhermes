@@ -17,30 +17,71 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ds.utils.calculate_perpendicular_velocity
 
         # get the core boundaries for the theta averages
-        # THIS WILL BREAK FOR ST40 BECAUSE DISCONNECTED DOUBLE NULL
-        ylower_core = ds.regions['core'].ylower_ind
-        yupper_core = ds.regions['core'].yupper_ind
+        
+        regions_list = list(ds.regions)
+        if 'core' in regions_list:
+            ylower_core = ds.regions['core'].ylower_ind
+            yupper_core = ds.regions['core'].yupper_ind
+            connected_flag = True
+        elif 'inner_core' in regions_list:
+            ylower_inner_core = ds.regions['inner_core'].ylower_ind
+            yupper_inner_core = ds.regions['inner_core'].yupper_ind
+            ylower_outer_core = ds.regions['outer_core'].ylower_ind
+            yupper_outer_core = ds.regions['outer_core'].yupper_ind
+            connected_flag = False
+        else:
+            print("Invalid geometry, core not in regions")
 
-        mean_ZF = ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('theta').mean('zeta')
-        mean_ZF.attrs['long_name'] = 'zonal flow velocity'
-        mean_ZF.attrs['standard_name'] = 'zonal flow velocity'
-        mean_ZF.attrs['conversion'] = 1
-        mean_ZF.attrs['units'] = 'm / s'
-        ds['mean_ZF'] = mean_ZF # only has radial and time dimensions
+        if connected_flag == True:
+            mean_ZF = ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('theta').mean('zeta')
+            mean_ZF.attrs['long_name'] = 'zonal flow velocity'
+            mean_ZF.attrs['standard_name'] = 'zonal flow velocity'
+            mean_ZF.attrs['conversion'] = 1
+            mean_ZF.attrs['units'] = 'm / s'
+            ds['mean_ZF'] = mean_ZF # only has radial and time dimensions
 
-        v_tilde_y = ds["V_ExB_theta"][:,:,:,:]-ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
-        v_tilde_y.attrs['long_name'] = 'poloidal fluctuation velocity'
-        v_tilde_y.attrs['standard_name'] = 'poloidal fluctuation velocity'
-        v_tilde_y.attrs['conversion'] = 1
-        v_tilde_y.attrs['units'] = 'm / s'
-        ds['v_tilde_y'] = v_tilde_y
+            v_tilde_y = ds["V_ExB_theta"][:,:,:,:]-ds["V_ExB_theta"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
+            v_tilde_y.attrs['long_name'] = 'poloidal fluctuation velocity'
+            v_tilde_y.attrs['standard_name'] = 'poloidal fluctuation velocity'
+            v_tilde_y.attrs['conversion'] = 1
+            v_tilde_y.attrs['units'] = 'm / s'
+            ds['v_tilde_y'] = v_tilde_y
 
-        v_tilde_x = ds["V_ExB_r"][:,:,:,:]-ds["V_ExB_r"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
-        v_tilde_x.attrs['long_name'] = 'radial fluctuation velocity'
-        v_tilde_x.attrs['standard_name'] = 'radial fluctuation velocity'
-        v_tilde_x.attrs['conversion'] = 1
-        v_tilde_x.attrs['units'] = 'm / s'
-        ds['v_tilde_x'] = v_tilde_x
+            v_tilde_x = ds["V_ExB_r"][:,:,:,:]-ds["V_ExB_r"][:,:,ylower_core:yupper_core,:].mean('zeta').mean('theta')
+            v_tilde_x.attrs['long_name'] = 'radial fluctuation velocity'
+            v_tilde_x.attrs['standard_name'] = 'radial fluctuation velocity'
+            v_tilde_x.attrs['conversion'] = 1
+            v_tilde_x.attrs['units'] = 'm / s'
+            ds['v_tilde_x'] = v_tilde_x
+        elif connected_flag == False:
+            v_theta_inner = ds["V_ExB_theta"][:,:,ylower_inner_core:yupper_inner_core,:]
+            v_theta_outer = ds["V_ExB_theta"][:,:,ylower_outer_core:yupper_outer_core,:]
+            v_theta_concatenated = xarray.concat([v_theta_inner, v_theta_outer], 'theta')
+
+            v_r_inner = ds["V_ExB_r"][:,:,ylower_inner_core:yupper_inner_core,:]
+            v_r_outer = ds["V_ExB_r"][:,:,ylower_outer_core:yupper_outer_core,:]
+            v_r_concatenated = xarray.concat([v_r_inner, v_r_outer], 'theta')
+
+            mean_ZF = v_theta_concatenated.mean('theta').mean('zeta')
+            mean_ZF.attrs['long_name'] = 'zonal flow velocity'
+            mean_ZF.attrs['standard_name'] = 'zonal flow velocity'
+            mean_ZF.attrs['conversion'] = 1
+            mean_ZF.attrs['units'] = 'm / s'
+            ds['mean_ZF'] = mean_ZF # only has radial and time dimensions
+
+            v_tilde_y = ds["V_ExB_theta"][:,:,:,:]-mean_ZF
+            v_tilde_y.attrs['long_name'] = 'poloidal fluctuation velocity'
+            v_tilde_y.attrs['standard_name'] = 'poloidal fluctuation velocity'
+            v_tilde_y.attrs['conversion'] = 1
+            v_tilde_y.attrs['units'] = 'm / s'
+            ds['v_tilde_y'] = v_tilde_y
+
+            v_tilde_x = ds["V_ExB_r"][:,:,:,:]-v_r_concatenated.mean('zeta').mean('theta')
+            v_tilde_x.attrs['long_name'] = 'radial fluctuation velocity'
+            v_tilde_x.attrs['standard_name'] = 'radial fluctuation velocity'
+            v_tilde_x.attrs['conversion'] = 1
+            v_tilde_x.attrs['units'] = 'm / s'
+            ds['v_tilde_x'] = v_tilde_x
 
         reynold_stress = (v_tilde_y * v_tilde_x).mean('zeta').mean('theta')
         reynold_stress.attrs['long_name'] = 'Reynold Stress'
