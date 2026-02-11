@@ -525,7 +525,7 @@ def statistic_diagonal_slice(
     if aspect is None:
         aspect = "auto"
  
-    image_data = data.values
+    image_data = data # check if data.values is making into np array. It is turning it into an np array. Removing .values, just use data.
     x_values, x_label = _get_R_coord_option('x', data)
     variable = data.name
 

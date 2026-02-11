@@ -514,7 +514,7 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
                     "{} data passed has {} dimensions - plotting 1D profile, average in time and zeta".format(variable, str(n_dims))
                 )
                 f1 = statistic_diagonal_slice(
-                    self,
+                    data,
                     color,
                     label,
                     statistic = statistic,
