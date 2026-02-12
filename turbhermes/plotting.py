@@ -543,7 +543,7 @@ def statistic_diagonal_slice(
     elif statistic == 'skews':
         statistic_value = skews
         statistic_label = 'skewness'
-    elif statistic == 'kurts':
+    elif statistic == 'kurt':
         statistic_value = kurt
         statistic_label = 'kurtosis'
     else:
@@ -557,6 +557,12 @@ def statistic_diagonal_slice(
     ax.set_aspect(aspect)
 
     # set range of plot
+    if vmin == None:
+        vmin = np.min(statistic_value) - 0.1
+    
+    if vmax == None:
+        vmax = np.max(statistic_value) + 0.1
+
     ax.set_ylim([vmin, vmax])
 
     # Add title and axis labels
