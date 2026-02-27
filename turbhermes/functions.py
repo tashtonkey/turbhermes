@@ -415,3 +415,5 @@ def bootstrapping_statistics(da, iterations):
     skews_error =np.std(skews_list)
     kurt_error =np.std(kurt_list)
     return mean_error, stdev_error, skews_error, kurt_error
+
+
