@@ -388,8 +388,30 @@ def get_radial_statistics(da, x_array):
         kurt_list.append(kurt)
 
     mean_list=np.array(mean_list)
-    stdev_list=np.array(stdev_list)
+    stdev_list=np.array(stdev_list) # mean RMS and stdev are the same, basically
     skews_list=np.array(skews_list)
     kurt_list=np.array(kurt_list)
 
     return mean_list, stdev_list, skews_list, kurt_list
+
+
+def bootstrapping_statistics(da, iterations):
+    # da will be an array in t and zeta, at a particular preset theta and x. 
+    da_flatten = da.values.flatten()
+    mean_list=[]
+    stdev_list=[]
+    skews_list=[]
+    kurt_list=[]
+    for iteration in range(iterations):
+        da_slice_bootstrap = np.random.choice(da_flatten, replace=True, size=len(da_flatten))  # some selection of the original da
+        mean, stdev, skews, kurt = get_statistics(da_slice_bootstrap)
+        mean_list.append(mean)
+        stdev_list.append(stdev)
+        skews_list.append(skews)
+        kurt_list.append(kurt)
+
+    mean_error = np.std(mean_list)
+    stdev_error = np.std(stdev_list)
+    skews_error =np.std(skews_list)
+    kurt_error =np.std(kurt_list)
+    return mean_error, stdev_error, skews_error, kurt_error

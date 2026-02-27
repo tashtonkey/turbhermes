@@ -470,7 +470,7 @@ def mean_diagonal_slice(
     variable = data.name
 
     mean, stdev, skews, kurt = get_radial_statistics(image_data, x_array = data['x'])
-
+    mean = data.mean('zeta').mean('t')
         # If not specified, determine max and min values across entire data series
     if vmax is None:
         vmax = (np.max(mean)+np.max(stdev))*1.1
