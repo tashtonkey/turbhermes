@@ -639,17 +639,17 @@ def fluctuation_cross_plot(
 
     return hist
 
-def cross_correlation(da, x_coord, y_coord):
+def cross_correlation(da, x_coord, y_coord, vmin=-1, vmax=1):
     da_slice = da[:,x_coord,y_coord,:]
     corr2d_unnormalised = scipy.signal.correlate2d(da_slice.values, da_slice.values, mode='full')
     limit = max(abs(np.min(corr2d_unnormalised)), abs(np.max(corr2d_unnormalised)))
     corr2d = corr2d_unnormalised / limit
     fig, ax = plt.subplots()
-    im=  ax.imshow(corr2d, cmap='PRGn', vmin=-1, vmax=1)
+    im=  ax.imshow(corr2d, cmap='PRGn', vmin=vmin, vmax=vmax)
     plt.colorbar(im, ax=ax)
     ax.set_aspect((corr2d.shape[1]) / (corr2d.shape[0]) ) # delta x / delta y
     ax.set_ylabel("Integer offset in time index")
     ax.set_xlabel("Integer offset in zeta index")
     ax.set_title("Self-correlation for (x={}, y={}) in time and zeta".format(x_coord, y_coord))
     plt.show()
-    return
+    return corr2d
