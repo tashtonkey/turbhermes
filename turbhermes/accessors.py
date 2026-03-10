@@ -229,7 +229,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
             if "T" + species not in self.data:
                 pressure = self.data["P" + species]
                 density = self.data["N" + species]
-                temperature = pressure/density
+                temperature = pressure/(density * 1.6e-19)
                 temperature.attrs["standard_name"] = "temperature"
                 temperature.attrs["long_name"] = species + " temperature"
                 temperature.attrs["units"] = "eV"
