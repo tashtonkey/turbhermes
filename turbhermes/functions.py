@@ -263,13 +263,20 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             ds['delta_B_zeta'] = delta_B_zeta
 
             # maxwell stress
-
-            maxwell_stress = (delta_B_r * delta_B_theta).mean('zeta').mean('theta')
-            maxwell_stress.attrs['long_name'] = 'Maxwell Stress'
-            maxwell_stress.attrs['standard_name'] = 'Maxwell Stress'
-            maxwell_stress.attrs['conversion'] = 1
-            maxwell_stress.attrs['units'] = 'T^2'
-            ds['maxwell_stress'] = maxwell_stress
+            if velocities_mean_theta ==True:
+                maxwell_stress = (delta_B_r * delta_B_theta).mean('zeta').mean('theta')
+                maxwell_stress.attrs['long_name'] = 'Maxwell Stress'
+                maxwell_stress.attrs['standard_name'] = 'Maxwell Stress'
+                maxwell_stress.attrs['conversion'] = 1
+                maxwell_stress.attrs['units'] = 'T^2'
+                ds['maxwell_stress'] = maxwell_stress
+            else:
+                maxwell_stress = (delta_B_r * delta_B_theta).mean('zeta')
+                maxwell_stress.attrs['long_name'] = 'Maxwell Stress'
+                maxwell_stress.attrs['standard_name'] = 'Maxwell Stress'
+                maxwell_stress.attrs['conversion'] = 1
+                maxwell_stress.attrs['units'] = 'T^2'
+                ds['maxwell_stress'] = maxwell_stress
 
         # ion pressure fluctuations
         if time_average_fluctuations==True:
