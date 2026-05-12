@@ -4,7 +4,7 @@ from scipy.stats import skew
 from scipy.stats import kurtosis
 from xbout import BoutDatasetAccessor, BoutDataArrayAccessor
 
-def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuations=False, velocities_mean_theta=True, AA = 2):
+def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuations=False, velocities_mean_theta=True, AA = 2, flutter_flag=False):
     # magnetic_flag = whether there is A-parallel in the dataset
     # time_average_fluctuations = take the time average when calculating delta_n etc
     # AA = number for dominant ion species. Assumes deuterium.
@@ -213,26 +213,26 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
             g_11 = ds['g_11']
             g_33 = ds['g_33']
             g22 = ds['g22']
-            Apar = ds["Apar"][:,:,:,:]
+            Apar = ds["Apar_tilde"][:,:,:,:]
 
             curl_A_x = (1/jacobian) * ( ((Apar * g_23)/(np.sqrt(g_22))).bout.ddy() - ((Apar * g_23)/(np.sqrt(g_22))).bout.ddz() ) * np.sqrt(g_11)
             curl_A_y = (1/jacobian) * ( ((Apar * g_12)/(np.sqrt(g_22))).bout.ddz() - ((Apar * g_23)/(np.sqrt(g_23))).bout.ddx() ) * np.sqrt(g_22)
             curl_A_z = (1/jacobian) * ( ((Apar * g_22)/(np.sqrt(g_22))).bout.ddx() - ((Apar * g_23)/(np.sqrt(g_12))).bout.ddy() ) * np.sqrt(g_33)
 
-            curl_A_x.attrs['long_name'] = 'delta-B x componenet magnetic fluctuation'
-            curl_A_x.attrs['standard_name'] = 'delta-B x componenet magnetic fluctuation'
+            curl_A_x.attrs['long_name'] = 'delta-B x component magnetic fluctuation'
+            curl_A_x.attrs['standard_name'] = 'delta-B x component magnetic fluctuation'
             curl_A_x.attrs['conversion'] = 1
             curl_A_x.attrs['units'] = 'T'
             ds['delta_B_x'] = curl_A_x
 
-            curl_A_y.attrs['long_name'] = 'delta-B y componenet magnetic fluctuation'
-            curl_A_y.attrs['standard_name'] = 'delta-B y componenet magnetic fluctuation'
+            curl_A_y.attrs['long_name'] = 'delta-B y component magnetic fluctuation'
+            curl_A_y.attrs['standard_name'] = 'delta-B y component magnetic fluctuation'
             curl_A_y.attrs['conversion'] = 1
             curl_A_y.attrs['units'] = 'T'
             ds['delta_B_y'] = curl_A_y
 
-            curl_A_z.attrs['long_name'] = 'delta-B z componenet magnetic fluctuation'
-            curl_A_z.attrs['standard_name'] = 'delta-B z componenet magnetic fluctuation'
+            curl_A_z.attrs['long_name'] = 'delta-B z component magnetic fluctuation'
+            curl_A_z.attrs['standard_name'] = 'delta-B z component magnetic fluctuation'
             curl_A_z.attrs['conversion'] = 1
             curl_A_z.attrs['units'] = 'T'
             ds['delta_B_z'] = curl_A_z
@@ -341,6 +341,18 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         turb_particle_flux.attrs['units'] = 'm^2 / s'
         ds['turb_particle_flux'] = turb_particle_flux
 
+        # Diamagnetic Drift Particle Flux
+        if time_average_fluctuations==True:
+            turb_particle_dia_flux = ((ds["V_dia_r_e"] - ds["V_dia_r_e"].mean('zeta')) * density_fluctuation).mean('zeta')# not taking time average for this .mean('time')
+        else:
+            turb_particle_dia_flux = ((ds["V_dia_r_e"] - ds["V_dia_r_e"].mean('zeta')) * density_fluctuation).mean('zeta')
+        turb_particle_dia_flux.attrs['long_name'] = 'turbulent particle diamagnetic drift flux'
+        turb_particle_dia_flux.attrs['standard_name'] = 'turbulent particle diamagnetic drift flux'
+        turb_particle_dia_flux.attrs['conversion'] = 1
+        turb_particle_dia_flux.attrs['units'] = 'm^2 / s'
+        ds['turb_particle_dia_flux'] = turb_particle_dia_flux
+
+
         # turbulent ion energy flux <\delta v_x \delta Pi>
         if time_average_fluctuations==True:
             turb_ion_pressure_flux = (v_tilde_x * ion_pressure_fluctuation).mean('zeta')# not taking time average for this .mean('time')
@@ -362,6 +374,16 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         turb_electron_pressure_flux.attrs['conversion'] = 1
         turb_electron_pressure_flux.attrs['units'] = 'W / m^2'
         ds['turb_Pe_flux'] = turb_electron_pressure_flux
+
+        if flutter_flag == True:
+            flutter_turb_flux = ((1/9.11e-31) * ds['NVe'] * delta_B_r).mean('zeta')
+            flutter_turb_flux.attrs['long_name'] = 'turbulent flutter driven particle flux'
+            flutter_turb_flux.attrs['standard_name'] = 'turbulent flutter particle flux'
+            flutter_turb_flux.attrs['conversion'] = 1
+            flutter_turb_flux.attrs['units'] = 'm^2 / s' # I am concerned about this unit, because delta_B_r is in T, so we need to divide by a T somewhere?
+            #flutter_heat_flux_e = 5/2 * ds['NVe'] * ds['Te'] * delta_B_r
+            #flutter_heat_flux_i = 5/2 * ds['NVi'] * ds['Ti'] * delta_B_r
+            
 
         # Record the new, updated, ds in the list of dictionaries.
         dictionary_list[label] = ds

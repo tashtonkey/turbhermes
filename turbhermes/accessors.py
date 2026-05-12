@@ -346,6 +346,29 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                     self.data['V_dia_y_' + species] = V_dia_y
                     self.data['V_dia_z_' + species] = V_dia_z
 
+                    sigma_B_pol = 1 # this should be the sigma-b-pol, check what the way to get this is.
+            
+                    V_dia_r = V_dia_x * sigma_B_pol
+                    V_dia_theta = V_dia_y * np.sqrt(1/(g22 * g_22))
+                    V_dia_zeta = V_dia_y * (g_23/np.sqrt(g_22 * g_33)) + V_dia_z
+
+                    V_dia_r.attrs['long_name'] = 'radial diamagnetic velocity component'
+                    V_dia_theta.attrs['long_name'] = 'theta diamagnetic velocity component'
+                    V_dia_zeta.attrs['long_name'] = 'zeta diamagnetic velocity component'
+                    V_dia_r.attrs['standard_name'] = 'radial diamagnetic velocity component'
+                    V_dia_theta.attrs['standard_name'] = 'theta diamagnetic velocity component'
+                    V_dia_zeta.attrs['standard_name'] = 'zeta diamagnetic velocity component'
+                    V_dia_r.attrs['conversion'] = 1
+                    V_dia_theta.attrs['conversion'] = 1
+                    V_dia_zeta.attrs['conversion'] = 1
+                    V_dia_r.attrs['units'] = 'm / s'
+                    V_dia_theta.attrs['units'] = 'm / s'
+                    V_dia_zeta.attrs['units'] = 'm / s'
+
+                    self.data['V_dia_r_' +  species] = V_dia_r
+                    self.data['V_dia_theta_'  + species] = V_dia_theta
+                    self.data['V_dia_zeta_' + species] = V_dia_zeta
+
                     new_species = species
                 else:
                     print("No pressure in dataset")
