@@ -207,17 +207,29 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
 
             # now getting the delta-br delta-btheta terms 
             jacobian = ds['J']
+            g11 = ds['g11']
+            g22 = ds['g22']
+            g33 = ds['g33']
             g_12 = ds['g_12']
             g_22 = ds['g_22']
             g_23 = ds['g_23']
             g_11 = ds['g_11']
             g_33 = ds['g_33']
             g22 = ds['g22']
-            Apar = ds["Apar_tilde"][:,:,:,:]
+            Apar_flutter = ds["Apar_tilde"][:,:,:,:]
 
-            curl_A_x = (1/jacobian) * ( ((Apar * g_23)/(np.sqrt(g_22))).bout.ddy() - ((Apar * g_23)/(np.sqrt(g_22))).bout.ddz() ) * np.sqrt(g_11)
-            curl_A_y = (1/jacobian) * ( ((Apar * g_12)/(np.sqrt(g_22))).bout.ddz() - ((Apar * g_23)/(np.sqrt(g_23))).bout.ddx() ) * np.sqrt(g_22)
-            curl_A_z = (1/jacobian) * ( ((Apar * g_22)/(np.sqrt(g_22))).bout.ddx() - ((Apar * g_23)/(np.sqrt(g_12))).bout.ddy() ) * np.sqrt(g_33)
+            """
+            curl_A_x = (1/jacobian) * ( ((Apar_flutter * g_23)/(np.sqrt(g_22))).bout.ddy() - ((Apar_flutter * g_23)/(np.sqrt(g_22))).bout.ddz() ) * np.sqrt(g_11)
+            curl_A_y = (1/jacobian) * ( ((Apar_flutter * g_12)/(np.sqrt(g_22))).bout.ddz() - ((Apar_flutter * g_23)/(np.sqrt(g_23))).bout.ddx() ) * np.sqrt(g_22)
+            curl_A_z = (1/jacobian) * ( ((Apar_flutter * g_22)/(np.sqrt(g_22))).bout.ddx() - ((Apar_flutter * g_23)/(np.sqrt(g_12))).bout.ddy() ) * np.sqrt(g_33)
+            """
+
+            # New Curl method as of 14th May 2026, I think its correct now. 
+            curl_A_x = (1/jacobian) * ( ((Apar_flutter * g_23 * np.sqrt(g33))/(np.sqrt(g_22))).bout.ddy() - ((Apar_flutter * g_22 * np.sqrt(g22))/(np.sqrt(g_22))).bout.ddz() ) 
+            curl_A_y = (1/jacobian) * ( ((Apar_flutter * g_12 * np.sqrt(g11))/(np.sqrt(g_22))).bout.ddz() - ((Apar_flutter * g_23 * np.sqrt(g33))/(np.sqrt(g_22))).bout.ddx() )
+            curl_A_z = (1/jacobian) * ( ((Apar_flutter * g_22 * np.sqrt(g22))/(np.sqrt(g_22))).bout.ddx() - ((Apar_flutter * g_12 * np.sqrt(g11))/(np.sqrt(g_22))).bout.ddy() ) 
+           
+
 
             curl_A_x.attrs['long_name'] = 'delta-B x component magnetic fluctuation'
             curl_A_x.attrs['standard_name'] = 'delta-B x component magnetic fluctuation'
