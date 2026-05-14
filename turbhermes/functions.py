@@ -241,9 +241,9 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
 
             sigma_B_pol = 1 # this should be the sigma-b-pol, check what the way to get this is.
 
-            delta_B_r = curl_A_x * sigma_B_pol
-            delta_B_theta = curl_A_y * np.sqrt(1/(g22 * g_22))
-            delta_B_zeta = curl_A_y * (g_23/np.sqrt(g_22 * g_33)) + curl_A_z
+            delta_B_r = (curl_A_x * sigma_B_pol) 
+            delta_B_theta = (curl_A_y * np.sqrt(1/(g22 * g_22)))  
+            delta_B_zeta = (curl_A_y * (g_23/np.sqrt(g_22 * g_33)) + curl_A_z) 
 
             delta_B_r.attrs['long_name'] = 'radial delta-B component'
             delta_B_theta.attrs['long_name'] = 'theta delta-B component'
@@ -376,7 +376,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ds['turb_Pe_flux'] = turb_electron_pressure_flux
 
         if flutter_flag == True:
-            flutter_turb_flux = ((1/9.11e-31) * ds['NVe'] * delta_B_r).mean('zeta')
+            flutter_turb_flux = ((1/9.11e-31) * ds['NVe'] * (delta_B_r/ds['Bxy'])).mean('zeta')
             flutter_turb_flux.attrs['long_name'] = 'turbulent flutter driven particle flux'
             flutter_turb_flux.attrs['standard_name'] = 'turbulent flutter particle flux'
             flutter_turb_flux.attrs['conversion'] = 1
