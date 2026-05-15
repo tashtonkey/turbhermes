@@ -388,7 +388,7 @@ def post_processing(dictionary_list, magnetic_flag=False, time_average_fluctuati
         ds['turb_Pe_flux'] = turb_electron_pressure_flux
 
         if flutter_flag == True:
-            flutter_turb_flux = ((1/9.11e-31) * ds['NVe'] * (delta_B_r/ds['Bxy'])).mean('zeta')
+            flutter_turb_flux = (ds['Ne'] * ds['Ve'] * (delta_B_r/ds['Bxy'])).mean('zeta')
             flutter_turb_flux.attrs['long_name'] = 'turbulent flutter driven particle flux'
             flutter_turb_flux.attrs['standard_name'] = 'turbulent flutter particle flux'
             flutter_turb_flux.attrs['conversion'] = 1
