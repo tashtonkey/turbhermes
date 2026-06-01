@@ -204,7 +204,7 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
         """Calculates local radial electric field"""
         
         if "radial_E" not in self.data:
-            E_x = -self.data["phi"].bout.ddx()
+            E_x = -self.data["phi"].bout.ddx() * np.sqrt(self.data['g11']) # need the R B_pol to normalise the gradient to real space. 
             E_x.attrs["standard_name"] = "radial E field"
             E_x.attrs["long_name"] = "radial electric field"
             E_x.attrs["units"] = "V m^-1"
@@ -320,9 +320,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                     pressure = self.data['P' + species]
                     density = self.data['N' + species]
 
-                    p_ddx = pressure.bout.ddx()
-                    p_ddy = pressure.bout.ddy()
-                    p_ddz = pressure.bout.ddz()
+                    p_ddx = pressure.bout.ddx() 
+                    p_ddy = pressure.bout.ddy() 
+                    p_ddz = pressure.bout.ddz() 
 
                     # this is -ve because ExB and diamagnetic need to oppose, and one document says this way, another says the other way, idk what's correct
                     V_dia_x = -(charge_sign * (p_ddy * g_23 - p_ddz * g_22) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_11)
@@ -375,6 +375,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
         if "V_ExB_x" not in self.data:
             potential = self.data['phi']
+
+            # adding the g11, g22, g33, normalisations for the derivatives in the gradients. pretty sure these are the gij not the g_ij
+            # 29/0/2026 - do not need it, check eqn 178 of the BOUT++ docs; these normalisations are absorbed into the g_ij's in the V_ExB expression
 
             phi_ddx = -potential.bout.ddx() # this is Ex. No need for any conversion
             phi_ddy = -potential.bout.ddy() # this is Ey
