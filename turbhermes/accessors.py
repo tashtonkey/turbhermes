@@ -300,7 +300,14 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
         
         g11 = self.data['g11']
         g22 = self.data['g22']
+        g23 = self.data['g23']
         g33 = self.data['g33']
+
+        nu_shift = np.sqrt(g23**2) / g22
+
+        ex_magnitude = np.sqrt(g_11)
+        ey_magnitude = np.sqrt(g_22 + 2 * nu_shift * g_23 + nu_shift**2 * g_33)
+        ez_magnitude = np.sqrt(g_33)
 
         rho_s0 = self.data.metadata['rho_s0']
 
@@ -325,9 +332,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
                     p_ddz = pressure.bout.ddz() 
 
                     # this is -ve because ExB and diamagnetic need to oppose, and one document says this way, another says the other way, idk what's correct
-                    V_dia_x = -(charge_sign * (p_ddy * g_23 - p_ddz * g_22) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_11)
-                    V_dia_y = -(charge_sign * (p_ddz * g_12 - p_ddx * g_23) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_22)
-                    V_dia_z = -(charge_sign * (p_ddx * g_22 - p_ddy * g_12) / (density *  1.602e-19 * g_22 )) * np.sqrt(g_33)
+                    V_dia_x = -(charge_sign * (p_ddy * g_23 - p_ddz * g_22) / (density *  1.602e-19 * g_22 )) * ex_magnitude
+                    V_dia_y = -(charge_sign * (p_ddz * g_12 - p_ddx * g_23) / (density *  1.602e-19 * g_22 )) * ey_magnitude
+                    V_dia_z = -(charge_sign * (p_ddx * g_22 - p_ddy * g_12) / (density *  1.602e-19 * g_22 )) * ez_magnitude
 
                     V_dia_x.attrs['long_name'] = 'radial diamagnetic velocity'
                     V_dia_y.attrs['long_name'] = 'poloidal diamagnetic velocity'
@@ -385,9 +392,9 @@ class UtilityDatasetAccessor(BoutDatasetAccessor):
 
             # Don't need to convert units because xHermes does it for me
             # -ve in front to be consistent with documentation from the BOUT++ manual : v_ExB = ExB/B**2
-            V_ExB_x = ((phi_ddy * g_23 - phi_ddz * g_22) / (g_22)) * np.sqrt(g_11)
-            V_ExB_y = ((phi_ddz * g_12 - phi_ddx * g_23) / (g_22)) * np.sqrt(g_22)
-            V_ExB_z = ((phi_ddx * g_22 - phi_ddy * g_12) / (g_22)) * np.sqrt(g_33)
+            V_ExB_x = ((phi_ddy * g_23 - phi_ddz * g_22) / (g_22)) * ex_magnitude
+            V_ExB_y = ((phi_ddz * g_12 - phi_ddx * g_23) / (g_22)) * ey_magnitude
+            V_ExB_z = ((phi_ddx * g_22 - phi_ddy * g_12) / (g_22)) * ez_magnitude
 
             V_ExB_x.attrs['long_name'] = 'x ExB velocity component'
             V_ExB_y.attrs['long_name'] = 'y ExB velocity component'
