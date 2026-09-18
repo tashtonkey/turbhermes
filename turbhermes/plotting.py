@@ -419,6 +419,7 @@ def plot_heatmap(
     ax=None,
     aspect=None,
     cmap='RdBu',
+    shading='gouraud',
     **kwargs,
 ):
     dims = data.dims # assume we should have time and x. so dims = ['t', 'x']
@@ -430,15 +431,21 @@ def plot_heatmap(
         x_axis_grid= data[dims[1]]
         x_label = str(dims[1])
 
-    time_array = data['t'].data
+    if 't' in dims:
+        y_array = data['t'].data
+        y_label='Time [s]'
+    elif 'zeta' in dims:
+        y_array = data['zeta'].data
+        y_label='Zeta'
+    
     amplitude_array = data.values # should already have been sliced to the desired coordinates
     variable = data.name
 
     if not ax:
         fig, ax = plt.subplots()
 
-    pcl = ax.pcolormesh(x_axis_grid, time_array, amplitude_array, vmin=vmin, vmax=vmax, cmap=cmap)
-    ax.set_xlabel(x_label)
+    pcl = ax.pcolormesh(x_axis_grid, y_array, amplitude_array, vmin=vmin, vmax=vmax, cmap=cmap, shading=shading)
+    
     if sep_pos is None:
         sep_pos = 0 # these are in normalised units, R_sep = 0
 
@@ -446,7 +453,7 @@ def plot_heatmap(
 
     ax.set_title(variable)
     ax.set_xlabel(x_label)
-    ax.set_ylabel("Time [s]")
+    ax.set_ylabel(y_label)
 
     return pcl
 
