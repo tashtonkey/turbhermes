@@ -579,22 +579,40 @@ class TurbulenceDataArrayAccessor(BoutDataArrayAccessor):
         n_dims = len(data.dims)
 
         if n_dims == 2:
-            if 't' in data.dims:
-                print(
-                    "{} data passed has {} dimensions - plotting 2D time-series heatmap".format(variable, str(n_dims))
+            if 'x' in data.dims:
+                if 't' in data.dims:
+                    print(
+                        "{} data passed has {} dimensions - plotting 2D time-series heatmap".format(variable, str(n_dims))
+                    )
+                    pcl = plot_heatmap(
+                        data=data,
+                        sep_pos=sep_pos,
+                        save_as=save_as,
+                        ax=ax,
+                        **kwargs,
+                    )
+                    return pcl
+                elif 'zeta' in data.dims:
+                    print(
+                        "{} data passed has {} dimensions - plotting 2D zeta-series heatmap".format(variable, str(n_dims))
+                    )
+                    pcl = plot_heatmap(
+                        data=data,
+                        sep_pos=sep_pos,
+                        save_as=save_as,
+                        ax=ax,
+                        **kwargs,
+                    )
+                    return pcl
+                else:
+                    print(
+                    "{} data passed has does not have time or zeta dimension".format(variable)
                 )
-                pcl = plot_heatmap(
-                    data=data,
-                    sep_pos=sep_pos,
-                    save_as=save_as,
-                    ax=ax,
-                    **kwargs,
-                )
-                return pcl
+                    return
             else:
                 print(
-                "{} data passed has does not have time dimension".format(variable)
-            )
+                    "{} data passed does not have x dimension".format(variable, str(n_dims))
+                )
                 return
         else:
             print(
