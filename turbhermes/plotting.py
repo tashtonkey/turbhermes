@@ -431,15 +431,21 @@ def plot_heatmap(
         x_axis_grid= data[dims[1]]
         x_label = str(dims[1])
 
+    
+    amplitude_array = data.values # should already have been sliced to the desired coordinates
+    variable = data.name
+
+    # need to make sure the amplitude array is matching the dimension shape
+    # if time and x, it is the correct order. If zeta and x, needs to be transposed    
+
     if 't' in dims:
         y_array = data['t'].data
         y_label='Time [s]'
     elif 'zeta' in dims:
         y_array = data['zeta'].data
         y_label='Zeta'
-    
-    amplitude_array = data.values # should already have been sliced to the desired coordinates
-    variable = data.name
+        amplitude_array = amplitude_array.transpose()
+
 
     if not ax:
         fig, ax = plt.subplots()
