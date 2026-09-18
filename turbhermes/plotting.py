@@ -418,6 +418,7 @@ def plot_heatmap(
     sep_pos=None,
     ax=None,
     aspect=None,
+    cmap='RdBu',
     **kwargs,
 ):
     dims = data.dims # assume we should have time and x. so dims = ['t', 'x']
@@ -436,7 +437,7 @@ def plot_heatmap(
     if not ax:
         fig, ax = plt.subplots()
 
-    pcl = ax.pcolormesh(x_axis_grid, time_array, amplitude_array, vmin=vmin, vmax=vmax)
+    pcl = ax.pcolormesh(x_axis_grid, time_array, amplitude_array, vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xlabel(x_label)
     if sep_pos is None:
         sep_pos = 0 # these are in normalised units, R_sep = 0
